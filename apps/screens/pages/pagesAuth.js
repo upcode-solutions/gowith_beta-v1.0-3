@@ -42,6 +42,7 @@ const login = ({ credentials, setCredentials, actionState, errorMessage }) => {
                 <TextInput
                     style={[globalStyles.input, { flex: 1 }]}
                     placeholder='email or username*'
+                    placeholderTextColor={rgba(colors.text, .5)}
                     value={credentials.usernameEmail}
                     onChangeText={(text) => setCredentials({ ...credentials, usernameEmail: text })}
                     ref={(ref) => inputRef.current[0] = ref}
@@ -61,6 +62,7 @@ const login = ({ credentials, setCredentials, actionState, errorMessage }) => {
                 <TextInput
                     style={globalStyles.input}
                     placeholder='password*'
+                    placeholderTextColor={rgba(colors.text, .5)}
                     value={credentials.password}
                     onChangeText={(text) => setCredentials({ ...credentials, password: text })}
                     ref={(ref) => inputRef.current[1] = ref}
@@ -113,6 +115,7 @@ const register = ({ credentials, setCredentials, actionState, errorMessage }) =>
                 <TextInput
                     style={globalStyles.input}
                     placeholder='email*'
+                    placeholderTextColor={rgba(colors.text, .5)}
                     value={credentials.usernameEmail}
                     onChangeText={(text) => setCredentials({ ...credentials, usernameEmail: text })}
                     ref={(ref) => inputRef.current[0] = ref}
@@ -132,6 +135,7 @@ const register = ({ credentials, setCredentials, actionState, errorMessage }) =>
                 <TextInput
                     style={globalStyles.input}
                     placeholder='password*'
+                    placeholderTextColor={rgba(colors.text, .5)}
                     value={credentials.password}
                     onChangeText={(text) => setCredentials({ ...credentials, password: text })}
                     ref={(ref) => inputRef.current[1] = ref}
@@ -152,6 +156,7 @@ const register = ({ credentials, setCredentials, actionState, errorMessage }) =>
                 <TextInput
                     style={globalStyles.input}
                     placeholder='confirm password*'
+                    placeholderTextColor={rgba(colors.text, .5)}
                     value={credentials.confirmPassword}
                     onChangeText={(text) => setCredentials({ ...credentials, confirmPassword: text })}
                     ref={(ref) => inputRef.current[2] = ref}

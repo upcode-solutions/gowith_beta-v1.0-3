@@ -18,7 +18,6 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'fireb
 //react native components
 import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Text, View, Image, ImageBackground, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Dimensions, Animated, Easing } from 'react-native'
-import { set } from 'firebase/database';
 
 export default function Auth({ navigation }) {
  
@@ -263,16 +262,16 @@ export default function Auth({ navigation }) {
 }
 
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
+  imageBackground: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height
+  },
   formCotainer: {
     position: 'absolute',
     bottom: '2.5%',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 15
-  },
-  imageBackground: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height
   },
   buttonContainer: {
     gap: 10,

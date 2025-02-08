@@ -32,7 +32,8 @@
     "react-native": "0.76.7",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-modal": "^13.0.1",
-    "react-native-toast-message": "1.4.0"
+    "react-native-toast-message": "1.4.0",
+    "@react-native-community/datetimepicker": "8.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

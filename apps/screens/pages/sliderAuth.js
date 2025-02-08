@@ -1,9 +1,8 @@
 //pages
 import { login, register } from './pagesAuth';
-import { useEffect } from 'react';
 //react native components
-import React, { useRef } from 'react'
-import { StyleSheet, Text, View, FlatList, Dimensions } from 'react-native'
+import React, { useRef, useEffect } from 'react'
+import { StyleSheet, View, FlatList, Dimensions } from 'react-native'
 
 export default function AuthSlider({ actionState, setActionState, credentials, setCredentials, errorMessage }) {
     

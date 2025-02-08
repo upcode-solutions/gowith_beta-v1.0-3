@@ -59,6 +59,7 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         fontSize: fontSize.md,
         color: colors.text,
         alignSelf: 'center',
+        textAlignVertical: 'center',
     },
 
     buttonContainer: {
@@ -79,7 +80,23 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     primaryButtonText: {
         fontFamily: fonts.RubikSemiBold,
         fontSize: fontSize.md,
-        color: colors.background,
+        color: colors.constantWhite,
+        alignSelf: 'center',
+    },
+    secondaryButton: {
+        width: '100%',
+        height: textBox.height,
+        borderRadius: borderRadius.sm,
+        backgroundColor: colors.secondary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: colors.shadowColor,
+    },
+    secondaryButtonText: {
+        fontFamily: fonts.RubikSemiBold,
+        fontSize: fontSize.md,
+        color: colors.constantWhite,
         alignSelf: 'center',
     },
 });
