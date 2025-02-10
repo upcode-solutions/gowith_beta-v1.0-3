@@ -17,7 +17,8 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
                 onBackdropPress={onClose}
                 backdropColor={backdropColor}
                 backdropOpacity={backdropOpacity}
-                backdropTransitionOutTiming={1}
+                backdropTransitionInTiming={5}
+                backdropTransitionOutTiming={5}
                 style={{ justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}
                 animationIn={'zoomIn'}
                 animationOut={'zoomOut'}

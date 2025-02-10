@@ -58,7 +58,7 @@ export default function Auth({ navigation }) {
     const uerType = ['clients', 'riders'];
     for (const type of uerType) { //loop through user types
       const userCollection = collection(firestore, type); //get user collection
-      const userQuery = query(userCollection, where('accountDetails.uid', '==', userCredential.user.uid)); //query user collection
+      const userQuery = query(userCollection, where('accountDetails.accountUid', '==', userCredential.user.uid)); //query user collection
       const userSnapshot = await getDocs(userQuery); //get user snapshot
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
@@ -126,7 +126,10 @@ export default function Auth({ navigation }) {
         if (!response.user.emailVerified) { throw new Error('Email not verified. Please check your inbox and try again.'); }
         const {exist, type} = await checkFirestore(response); // check if user exists in firestore
         if (exist) { setNecessaryData(response.user.uid, type, loweredEmail, credentials.password); }
-        else { navigation.navigate('SetupScreen', { authLocalData: { email: loweredEmail, uid: response.user.uid, password: credentials.password, type: type }}); }
+        else { 
+          setActionState((prev) => ({ ...prev, modalLoading: false }));
+          navigation.navigate('SetupScreen', { authLocalData: { email: loweredEmail, uid: response.user.uid, password: credentials.password, type: type }}); 
+        }
       } else {
         let email = '';
         const userType = ['clients', 'riders'];
@@ -134,21 +137,21 @@ export default function Auth({ navigation }) {
           const userCollection = collection(firestore, type); // get user collection
           const userQuery = query(userCollection, where('personalInformation.username', '==', credentials.usernameEmail)); // query user collection
           const userSnapshot = await getDocs(userQuery); // get user snapshot
-          if (userSnapshot.docs.length > 0) { email = userSnapshot.docs[0].data().personalInformation.email; break; }
+          if (userSnapshot.docs.length > 0) {  email = userSnapshot.docs[0].data().personalInformation.email;  break; }
         }
         if (email) {
           const response = await signInWithEmailAndPassword(auth, email, credentials.password); // create auth account
           if (!response.user.emailVerified) { throw new Error('Email not verified. Please check your inbox.'); }
           const {exist, type} = await checkFirestore(response); // check if user exists in firestore
           if (exist) { setNecessaryData(response.user.uid, type, email, credentials.password); }
-          else { navigation.navigate('SetupScreen', { authLocalData: { email: email, uid: response.user.uid, password: credentials.password, type: type }}); }
         } else { throw new Error('Username does not exist. Please provide your email instead.'); }
       }
     } catch (error) {
       setActionState((prev) => ({ ...prev, modalLoading: false }));
-      console.warn(`auth ${Device.deviceName} - loginHandler: `, error.code);
-      if (error.code === 'auth/invalid-credential') { errorHandler('Invalid credentials. Please ensure that your email and password are correct and try again.'); }
-      else { errorHandler(error.message); }
+      console.warn(`auth ${Device.deviceName} - loginHandler: `, error.message || error.code || error);
+      if (error.code === 'auth/invalid-credential') { 
+        errorHandler('Invalid credentials. Please ensure that your email and password are correct and try again.'); 
+      } else { errorHandler(error.message || 'An error occurred during login. Please try again.'); }
     }
   }
 

@@ -47,6 +47,7 @@ export default function AuthSlider({ actionState, setActionState, credentials, s
             bounces={false}
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
+            scrollEnabled={false}
             getItemLayout={(data, index) => ({
                 length: width,
                 offset: width * index,

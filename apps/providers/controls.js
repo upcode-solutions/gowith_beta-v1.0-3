@@ -16,7 +16,7 @@ const ControlsContext = createContext();
 
 const ControlsProvider = ({ children }) => {
     //important controls
-    const [localControls, setLocalControls] = useState({ darkMode: false, cdTime: 0, cdTimestamp: '', endSession: false, loggedIn: false });
+    const [localControls, setLocalControls] = useState({ darkMode: false, endSession: false, loggedIn: false, cdTimestamp: null });
     const [listener, setListener] = useState({ firestore: false });
     const [localData, setLocalData] = useState({});
     const [firestoreUserData, setFirestoreUserData] = useState({});
@@ -27,7 +27,7 @@ const ControlsProvider = ({ children }) => {
     //references
     const progress = useRef(new Animated.Value(0)).current;
 
-    const initiateLogoutHandler = async (endSession) => { //log out hangler function
+    const initiateLogoutHandler = async (endSession) => { //log out handler function
         signOut(auth);
         setFirestoreUserData({});
         setLocalData({});
@@ -35,7 +35,7 @@ const ControlsProvider = ({ children }) => {
         //add remove logic
     }
 
-    useEffect(() => { //fetch control and local data from asynchStorage on app load
+    useEffect(() => { //fetch control and local data from AsyncStorage on app load
         const fetchStashedData = async () => { //fetch stashed data { localControls and localData }
             try {
                 const [stashedLocalControls, stashedLocalData] = await Promise.all([
@@ -60,31 +60,6 @@ const ControlsProvider = ({ children }) => {
         return () => { transactionFeeListener(); }
     }, []);
 
-    useEffect(() => { //countdown handler
-        if (localControls.countdown > 0) {
-            const timer = setInterval(() => { setLocalControls((prev) => ({ ...prev, countdown: prev.countdown - 1 })); }, 1000);
-            return () => clearInterval(timer);
-        }
-    }, [localControls.cooldown]);
-
-    useEffect(() => {
-        const calculateRemainingTime = () => {
-            const currentTime = new Date().getTime();
-            const cdTimestamp = new Date(localControls.cdTimestamp).getTime();
-            const cdTime = localControls.cdTime * 60 * 1000; // Convert minutes to milliseconds
-            const remainingTime = cdTimestamp + cdTime - currentTime;
-
-            if (remainingTime > 0) { setLocalControls((prev) => ({ ...prev, countdown: Math.floor(remainingTime / 1000) })); // Set countdown in seconds
-            } else { setLocalControls((prev) => ({ ...prev, countdown: 0 })); }
-        };
-
-        if (localControls.cdTimestamp && localControls.cdTime) {
-            calculateRemainingTime();
-            const interval = setInterval(calculateRemainingTime, 1000); // Update every second
-            return () => clearInterval(interval);
-        }
-    }, [localControls.cdTimestamp, localControls.cdTime]);
-
     useEffect(() => { //listen to user data in firestore
         if (localData?.userType && localData?.uid) { 
 
@@ -104,9 +79,9 @@ const ControlsProvider = ({ children }) => {
             try { await AsyncStorage.setItem(key, JSON.stringify(data)); // save data
             } catch (e) { console.error(`Error saving ${key}:`, e);  } // log error
         };
-        saveDataToAsyncStorage('localControls', localControls); // save localControls everytime it updates
+        saveDataToAsyncStorage('localControls', localControls); // save localControls every time it updates
         if (Object.keys(localData).length > 0) { saveDataToAsyncStorage('userData', localData); } // save userData if it exists
-    }, [localControls, localData,]);
+    }, [localControls, localData]);
 
     useEffect(() => { //update firestore account details and initiate listeners
         if(isReady.fetchedData && isReady.fetchedTransactionFee) { 
@@ -144,7 +119,6 @@ const ControlsProvider = ({ children }) => {
         }).start();
     }, [localControls, localData, firestoreUserData, firestoreTransactionFee, isReady]);
     
-
     const calculateProgress = () => {
         let progress = 0;
         if ( Object.keys(localData).length > 0 ) {
@@ -159,7 +133,6 @@ const ControlsProvider = ({ children }) => {
         return progress;
     };
     
-
     if (loading) {
         return (
             <View style={styles.container}>

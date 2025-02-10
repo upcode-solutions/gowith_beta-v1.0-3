@@ -4,7 +4,7 @@ import { personalInformation, contactInformation } from './pagesSetup';
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, Dimensions } from 'react-native';
 
-export default function SliderSetup({ credentials, setCredentials, errorMessage, currentPage, setCurrentPage, actioState, setActionState }) {
+export default function SliderSetup({ credentials, setCredentials, errorMessage, currentPage, setCurrentPage, actionState, setActionState, sendSMS, verifyOtp, localControls, setLocalControls, timer }) {
 
     //local variables
     const { width } = Dimensions.get('window');
@@ -16,36 +16,29 @@ export default function SliderSetup({ credentials, setCredentials, errorMessage,
         return (
             <View style={[styles.pageContainer, { width }]}>
                 <PageComponent 
-                    credentials={credentials} 
-                    setCredentials={setCredentials} 
-                    errorMessage={errorMessage}
-                    actionState={actioState}
-                    setActionState={setActionState}
+                    {...{ credentials, setCredentials, errorMessage, actionState, setActionState, sendSMS, verifyOtp, localControls, setLocalControls, timer }}
                 />
             </View>
         );
     };
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {
-        if (viewableItems.length > 0) {
-            setCurrentPage(viewableItems[0].index);
-        }
+        if (viewableItems.length > 0) { setCurrentPage(viewableItems[0].index); }
     }).current;
 
     useEffect(() => {
-        if (flatListRef.current) {
-            flatListRef.current.scrollToIndex({ index: currentPage, animated: true });
-        }
+        if (flatListRef.current) { flatListRef.current.scrollToIndex({ index: currentPage, animated: true }); }
     }, [currentPage]);
 
     return( 
         <FlatList
             ref={flatListRef}
             data={pages}
-            renderItem={({ item }) => renderItem({ item, credentials, setCredentials })}
+            renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             horizontal
             pagingEnabled 
+            scrollEnabled={false}
             bounces={false}
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
@@ -53,6 +46,7 @@ export default function SliderSetup({ credentials, setCredentials, errorMessage,
             viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
             keyboardShouldPersistTaps="always"
             onViewableItemsChanged={onViewableItemsChanged}
+            
         />
     );
 }

@@ -25,22 +25,7 @@
       "favicon": "./apps/assets/icons/favicon.png"
     },
     "plugins": [
-      "expo-build-properties",
-      [
-        "@react-native-community/datetimepicker",
-        {
-          "android": {
-            "datePicker": {
-              "colorAccent": {
-                "light": "#311787"
-              },
-              "textColorPrimary": {
-                "light": "#FF5722"
-              }
-            }
-          }
-        }
-      ]
+      "expo-build-properties"
     ]
   }
 }

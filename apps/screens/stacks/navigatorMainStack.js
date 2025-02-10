@@ -1,25 +1,32 @@
-//context providerts
+//context providers
 import { useControls } from '../../providers/controls'
 //screen navigators
+import Suspended from '../scrSuspended'
 import AuthStack from './navigatorAuthStack'
 import HomeStack from './navigatorHomeStack'
 //libraries
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 //react native components
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet } from 'react-native'
 
 const Stack = createNativeStackNavigator() //initiate stack
 
 export default function navigatorMainStack() {
+  const { localControls, firestoreUserData } = useControls();
+  const { loggedIn } = localControls;
+  const suspensionDate = firestoreUserData?.accountDetails?.suspensionDate;
 
-  const { localControls } = useControls();
+  // Parse the suspensionDate and compare it with the current date
+  const isSuspended = suspensionDate ? new Date(suspensionDate.split('/').reverse().join('-')) > new Date() : false;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      { localControls.loggedIn
-        ? <Stack.Screen name="Home" component={HomeStack} />
-        : <Stack.Screen name="Auth" component={AuthStack} />
+      { isSuspended
+        ? <Stack.Screen name="Suspended" component={Suspended} />
+        : loggedIn
+          ? <Stack.Screen name="HomeStack" component={HomeStack} />
+          : <Stack.Screen name="AuthStack" component={AuthStack} />
       }
     </Stack.Navigator>
   )

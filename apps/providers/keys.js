@@ -1,6 +1,6 @@
 const textBeeConfig = { //text bee api keys
-    apiKey: "AIzaSyD_0Bz2rJmzQ2GXuyzFxz922cL8UlUgl_Y",
-    deviceId: '1234567890'
+    apiKey: "479f33b1-5772-4539-a74d-176b4ca10712",
+    deviceId: '679c526ea952a96ad6f1e3eb'
 }
 
 const firebaseConfig = { //firebase api keys
