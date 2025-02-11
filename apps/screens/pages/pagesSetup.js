@@ -5,7 +5,7 @@ import { useGlobalStyles } from '../../providers/styles';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 //react native components
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, act } from 'react'
 import { StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native'
 
 const personalInformation = ({ credentials, setCredentials, errorMessage }) => {
@@ -17,6 +17,7 @@ const personalInformation = ({ credentials, setCredentials, errorMessage }) => {
     //refenernces ==============================================================
     const inputRef = useRef([]);
 
+    //functions ================================================================
     const textBoxBackgroundHandler = () => {
         let bgFirstName = colors.form;
         let bgLastName = colors.form;
@@ -32,6 +33,7 @@ const personalInformation = ({ credentials, setCredentials, errorMessage }) => {
         return [bgFirstName, bgLastName, bgUsername];
     }
 
+    //return ==============================================================
     return (
         <View style={globalStyles.formCotainer}>
             <View style={globalStyles.headerContainer}>
@@ -96,7 +98,6 @@ const personalInformation = ({ credentials, setCredentials, errorMessage }) => {
 }
 
 const contactInformation = ({ credentials, setCredentials, errorMessage, setActionState, sendSMS, localControls,setLocalControls }) => { 
-    const [cdTime, setCdTime] = useState(0);
     //context providers varables ===============================================
     const { fonts, colors, rgba } = useThemes();
     const globalStyles = useGlobalStyles(fonts, colors, rgba);
@@ -104,25 +105,7 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
     //refenernces ==============================================================
     const inputRef = useRef([]);
 
-    useEffect(() => {
-        if (!localControls?.cdTimestamp) return;
-
-        const calculateRemainingTime = () => {
-            const currentTime = new Date().getTime();
-            const elapsedTime = currentTime - localControls.cdTimestamp;
-            const remainingTime = Math.ceil((1500 - elapsedTime) / 1000); // 2.5 minutes
-
-            if (remainingTime <= 0) {
-                setCdTime(0);
-                if (setLocalControls) { setLocalControls(prev => ({ ...prev, cdTimestamp: null })); }
-            } else { setCdTime(remainingTime); }
-        };
-
-        calculateRemainingTime();
-        const interval = setInterval(calculateRemainingTime, 1000);
-        return () => clearInterval(interval);
-    }, [localControls?.cdTimestamp, setLocalControls]);
-
+    //functions ================================================================
     const formatDate = (dob) => {
         const { date, month, year } = dob;
         if (!date || !month || !year) { 
@@ -145,7 +128,7 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
 
         if (errorMessage) {
             const loweredErrorMessage = errorMessage.toLowerCase();
-            if (loweredErrorMessage.includes('contact')) { bgContactNumber = colors.errorRedText; }
+            if (loweredErrorMessage.includes('contact') || loweredErrorMessage.includes('number')) { bgContactNumber = colors.errorRedText; }
             if (loweredErrorMessage.includes('date')) { bgDateOfBirth = colors.errorRedText; }
             if (loweredErrorMessage.includes('weight')) { bgWeight = colors.errorRedText; }
         }
@@ -153,6 +136,7 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
         return [bgContactNumber, bgDateOfBirth, bgWeight];
     }
 
+    //return ==============================================================
     return (
         <View style={globalStyles.formCotainer}>
             <View style={globalStyles.headerContainer}>
@@ -179,8 +163,8 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
                         maxLength={10}
                     />
                 </View>
-                <TouchableOpacity onPress={() => sendSMS()} disabled={cdTime > 0}>
-                    <Text style={styles.verify}>{cdTime > 0 ? `Resend in ${cdTime}s` : 'Verify'}</Text>
+                <TouchableOpacity onPress={() => setActionState((prev) => ({ ...prev, otpModal: true }))}>
+                    <Text style={styles.verify}>VERIFY</Text>
                 </TouchableOpacity>
             </View>
 
@@ -222,24 +206,47 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
     )
 }
 
-const OtpInput = ({ credentials, setCredentials, errorMessage, sendSMS, verifyOtp,localControls,setLocalControls }) => {
-    const [cdTime, setCdTime] = useState(0);
+const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, sendSMS, verifyOtp, localControls, setLocalControls, setLoading, generatedOtp }) => {
+    
+    //context providers varables ===============================================
     const { fonts, colors, rgba } = useThemes();
     const globalStyles = useGlobalStyles(fonts, colors, rgba);
     const styles = createStyles(fonts, colors);
+    //refenernces ==============================================================
+    const [cdTime, setCdTime] = useState(0);
 
+    //functions ================================================================
+    const submitHandler = () => {
+        setLoading(true);
+        if (generatedOtp.length < 1) { sendSMS(); }
+        else { verifyOtp(); }
+    }
+
+    const textBoxBackgroundHandler = () => {
+        let bgOtp = colors.form;
+        if (errorMessage) {
+            const loweredErrorMessage = errorMessage.toLowerCase();
+            if (loweredErrorMessage.includes('phone')) {
+                bgOtp = colors.errorRedText;
+            }
+        }
+        return [bgOtp];
+    }
+
+    //useEffect ================================================================
     useEffect(() => {
         if (!localControls.cdTimestamp) return;
 
         const calculateRemainingTime = () => {
             const currentTime = new Date().getTime();
-            const elapsedTime = currentTime - localControls.cdTimestamp;
-            const remainingTime = Math.ceil((150000 - elapsedTime) / 1000);
+            const cdTimeStart = localControls.cdTimestamp * 1000;
+            const cdDuration = 1.5 * 60 * 1000;
+            const remainingTime = cdTimeStart + cdDuration
 
-            if (remainingTime <= 0) {
+            if (remainingTime < currentTime || actionState.contactNumberVerified) {
                 setCdTime(0);
                 setLocalControls(prev => ({ ...prev, cdTimestamp: null }));
-            } else { setCdTime(remainingTime); }
+            } else { setCdTime(Math.ceil((remainingTime - currentTime) / 1000)); }
         };
 
         calculateRemainingTime();
@@ -247,17 +254,7 @@ const OtpInput = ({ credentials, setCredentials, errorMessage, sendSMS, verifyOt
         return () => clearInterval(interval);
     }, [localControls.cdTimestamp]);
 
-    const textBoxBackgroundHandler = () => {
-        let bgOtp = colors.form;
-        
-        if ( errorMessage) { 
-            const loweredErrorMessage = errorMessage.toLowerCase();
-            if (loweredErrorMessage.includes('otp')) { bgOtp = colors.errorRedText; }
-        }
-        
-        return [bgOtp];
-    }
-
+    //return ===================================================================
     return (
         <View style={globalStyles.formCotainer}>
             <View style={globalStyles.headerContainer}>
@@ -279,11 +276,11 @@ const OtpInput = ({ credentials, setCredentials, errorMessage, sendSMS, verifyOt
                 />
             </View>
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={globalStyles.primaryButton} onPress={() => verifyOtp()}>
-                    <Text style={globalStyles.primaryButtonText}>VERIFY</Text>
+                <TouchableOpacity style={globalStyles.primaryButton} onPress={() => submitHandler()}>
+                    <Text style={globalStyles.primaryButtonText}>{generatedOtp.length <= 0 ? 'SEND OTP SMS CODE' : 'VERIFY'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => sendSMS()} disabled={cdTime > 0}>
-                    <Text style={styles.resendOtp}>{cdTime > 0 ? `Didn\'t receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
+                <TouchableOpacity style={{ opacity: cdTime > 0 || actionState.contactNumberVerified ? .5 : 1 }} onPress={() => sendSMS()} disabled={cdTime > 0 || actionState.contactNumberVerified}>
+                    <Text style={styles.resendOtp}>{generatedOtp.length <= 0 ? ' ' : cdTime > 0 ? `Didn't receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -299,9 +296,6 @@ const createStyles = (fonts, colors) => StyleSheet.create({
         gap: 10
     },
     buttonContainer: {
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
         gap: 10,
     },
     verify: {

@@ -7,10 +7,21 @@ import ControlsProvider from './apps/providers/controls';
 import ThemesProvider from './apps/providers/themes';
 //main stacks
 import MainStack from './apps/screens/stacks/navigatorMainStack';
+//libraries
+import * as ScreenOrientation from 'expo-screen-orientation';
 //native hooks
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 export default function App() {
+
+  useEffect(() => {
+    const lockOrientation = async () => {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+    lockOrientation();
+  }, []);
+
   return (
     <ControlsProvider>
       <ThemesProvider>

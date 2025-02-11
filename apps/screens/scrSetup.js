@@ -23,7 +23,6 @@ import { OtpInput } from './pages/pagesSetup';
 //react native components
 import React, { useEffect, useState, useRef, use } from 'react'
 import { StyleSheet, Text, Image, ImageBackground, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Dimensions, Animated, Easing } from 'react-native'
-import { set } from 'firebase/database';
 
 export default function Setup({ route, navigation }) {
 
@@ -39,8 +38,8 @@ export default function Setup({ route, navigation }) {
     const [actionState, setActionState] = useState({ keyboardVisible: false, datePickerVisible: false, eulaVisible: false, eulaAccepted: false, otpModal: false, contactNumberVerified: false });
     const [errorMessage, setErrorMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
-    const pagesCount = 2;
     const [generatedOtp, setGeneratedOtp] = useState('');
+    const pagesCount = 2;
     //refenerences ============================================================================================================
     const logoOpacityRef = useRef(new Animated.Value(1)).current;
 
@@ -71,33 +70,31 @@ export default function Setup({ route, navigation }) {
     };
 
     const sendSMS = async () => { //verify contact number
-        switch (true) {
-          case credentials.contactNumber === '': showNotification('Contact Number is required. Please try again.', 'error', 3000); return;
-          case credentials.contactNumber.length < 10 || credentials.contactNumber.length > 11: showNotification('Contact Number must be at least 10 digits long. Please try again.', 'error', 3000); return;
-        }
-
-        const userType = ['clients', 'riders']; //check clients and riders collection for the same number
-        for (const type of userType) {
-            const q = query(collection(firestore, type), where('personalInformation.contactNumber', '==', credentials.contactNumber));
-            const querySnapshot = await getDocs(q);
-            console.log(querySnapshot.docs);
-            
-            if(!querySnapshot.empty) {
-              showNotification('Contact Number already exists. Please try again.', 'error', 3000);
-              setCredentials(prev => ({ ...prev, contactNumber: '' }));
-              return;
-            }
-        }
-
-        setLoading(true);
-        let otp;
-        do { otp = Math.floor(100000 + Math.random() * 900000).toString(); } 
-        while (otp === credentials.otp);
-        setGeneratedOtp(otp);
-        setCredentials(prev => ({ ...prev, otp: '' }));
-
-        const recepients = `+63${credentials.contactNumber}`;
         try {
+          switch (true) {
+            case credentials.contactNumber === '': showNotification('Contact Number is required. Please try again.', 'error', 3000); return;
+            case credentials.contactNumber.length < 10 || credentials.contactNumber.length > 11: showNotification('Contact Number must be at least 10 digits long. Please try again.', 'error', 3000); return;
+          }
+
+          const userType = ['clients', 'riders']; //check clients and riders collection for the same number
+          for (const type of userType) {
+              const q = query(collection(firestore, type), where('personalInformation.contactNumber', '==', credentials.contactNumber));
+              const querySnapshot = await getDocs(q);
+              
+              if(!querySnapshot.empty) {
+                throw new Error('Contact Number is already in use. Please try again.');
+              }
+          }
+
+          setLoading(true);
+
+          let otp;
+          do { otp = Math.floor(100000 + Math.random() * 900000).toString(); } 
+          while (otp === credentials.otp);
+          setGeneratedOtp(otp);
+          setCredentials(prev => ({ ...prev, otp: '' }));
+
+          const recepients = `+63${credentials.contactNumber}`;
           const { apiKey, deviceId } = textBeeConfig;
           const response = await axios.post(`https://api.textbee.dev/api/v1/gateway/devices/${deviceId}/send-sms`, {
             recipients: [ recepients ],
@@ -108,23 +105,25 @@ export default function Setup({ route, navigation }) {
             setActionState(prev => ({ ...prev, otpModal: true }));
             setLocalControls(prev => ({
                 ...prev,
-                cdTimestamp: new Date().getTime()
+                cdTimestamp: new Date().getTime() / 1000
             }));
           }
         } catch (error) {
-          console.warn(error);
-          setLoading(false);
-          showNotification('Failed to send verification code. Please try again.', 'error', 3000);
+          errorHandler(error.message);
         }
     };
 
     const verifyOtp = () => { //verify otp
-      if (credentials.otp === generatedOtp) {  
+      if (credentials.otp === generatedOtp && generatedOtp.length > 0) { 
         setActionState(prev => ({ ...prev, otpModal: false, contactNumberVerified: true })); 
         showNotification('Contact number has been successfully verified.', 'success', 3000);
         setErrorMessage('');
+        setLoading(false);
       }
-      else { errorHandler('Invalid OTP entered. Please check your SMS and try again.'); }
+      else { r
+        setLoading(false);
+        errorHandler('Invalid OTP entered. Please check your SMS and try again.'); 
+      }
     };
 
     const submitHandler = async () => { //submit form
@@ -140,6 +139,7 @@ export default function Setup({ route, navigation }) {
         case /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(credentials.username): return errorHandler('Username must not contain special characters. Please try again.');
         case credentials.username.length < 9: return errorHandler('Username must be at least 5 characters long. Please try again.');
         case credentials.contactNumber === '': return errorHandler('Contact Number is required. Please enter your contact number and try again.');
+        case credentials.contactNumber[0] === '0': return errorHandler('Contact Number cannot start with 0. Please try again.');
         case credentials.contactNumber.length < 10 || credentials.contactNumber.length > 11: return errorHandler('Contact Number must be at least 10 digits long. Please try again.');
         case credentials.dob.date === '' || credentials.dob.month === '' || credentials.dob.year === '': return errorHandler('Date of Birth is required. Please enter your date of birth and try again.');
         case credentials.dob.year > new Date().getFullYear(): return errorHandler('Date of Birth cannot be in the future. Please try again.');
@@ -227,7 +227,7 @@ export default function Setup({ route, navigation }) {
       if(route.params) {
         const { authLocalData } = route.params;
         !authLocalData && navigation.navigate('AuthScreen');
-      } else { navigation.navigate('AuthScreen'); }
+      } /* else { navigation.navigate('AuthScreen'); } */
     },[route.params]);
 
     //renders =================================================================================================================
@@ -261,8 +261,6 @@ export default function Setup({ route, navigation }) {
             isVisible={actionState.otpModal}
             onClose={() => { 
               setActionState(prev => ({ ...prev, otpModal: false }));
-              setCredentials(prev => ({ ...prev, contactNumber: '', otp: '' }));
-              setGeneratedOtp('');
               errorHandler('Failed to verify phone number. Please try again.');
             }}
             backgroundColor={colors.background}
@@ -271,11 +269,14 @@ export default function Setup({ route, navigation }) {
               credentials={credentials}
               setCredentials={setCredentials}
               setActionState={setActionState}
+              actionState={actionState}
               sendSMS={sendSMS}
               verifyOtp={verifyOtp}
               errorMessage={errorMessage}
               localControls={localControls}
-              setLocalControls={setLocalControls}  // Add this line
+              setLocalControls={setLocalControls}
+              setLoading={setLoading}
+              generatedOtp={generatedOtp}
             />
           </BottomSheet>
 
