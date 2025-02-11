@@ -1,26 +1,17 @@
-//context providers
-import { useControls } from '../../providers/controls'
-
+//libraries
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+//screens
+import Home from '../scrHome'
+//react native components
 import React from 'react'
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
+
+const Stack = createNativeStackNavigator() //initiate stack
 
 export default function HomeStack() {
-
-  const { initiateLogoutHandler } = useControls();
-
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <TouchableOpacity style={styles.button} onPress={() => initiateLogoutHandler(false)}>
-        <Text>navigatorHomeStack</Text>
-      </TouchableOpacity>
-    </View>
+    <Stack.Navigator>
+      <Stack.Screen name="HomeScren" component={Home} />
+    </Stack.Navigator>
   )
 }
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5
-  }
-})

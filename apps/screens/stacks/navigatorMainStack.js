@@ -15,15 +15,11 @@ const Stack = createNativeStackNavigator() //initiate stack
 export default function navigatorMainStack() {
   const { localControls, firestoreUserData } = useControls();
   const { loggedIn } = localControls;
-  const suspensionDate = firestoreUserData?.accountDetails?.suspensionDate;
-
-  // Parse the suspensionDate and compare it with the current date
-  const isSuspended = suspensionDate ? new Date(suspensionDate.split('/').reverse().join('-')) > new Date() : false;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      { isSuspended
-        ? <Stack.Screen name="Suspended" component={Suspended} />
+      { firestoreUserData.accountDetails?.suspensionDate?.length > 0
+        ? <Stack.Screen name="SuspendedScreen" component={Suspended} />
         : loggedIn
           ? <Stack.Screen name="HomeStack" component={HomeStack} />
           : <Stack.Screen name="AuthStack" component={AuthStack} />

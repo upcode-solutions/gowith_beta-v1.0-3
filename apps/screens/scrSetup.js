@@ -176,7 +176,7 @@ export default function Setup({ route, navigation }) {
             suspensionDate: ``,
             suspensionDuration: ``,
             suspensionReason: ``,
-            suspensionAmount: ``,
+            suspensionAmount: 0,
             deviceId: Device.deviceName,
             flags: '',
           },

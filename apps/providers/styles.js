@@ -54,6 +54,7 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     },
     input: {
         flex: 1,
+        minHeight: textBox.height,
         height: textBox.height,
         fontFamily: fonts.RubikRegular,
         fontSize: fontSize.md,
