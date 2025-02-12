@@ -29,7 +29,7 @@ const login = ({ credentials, setCredentials, actionState, errorMessage }) => {
     }
 
     return (
-        <View style={globalStyles.formCotainer}>
+        <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.constantWhite} size={25} />
                 <Text style={globalStyles.headerText}>LOGIN TO YOUR ACCOUNT</Text>
@@ -102,7 +102,7 @@ const register = ({ credentials, setCredentials, actionState, errorMessage }) =>
     }
 
     return (
-        <View style={globalStyles.formCotainer}>
+        <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.constantWhite} size={25} />
                 <Text style={globalStyles.headerText}>CREATE AN ACCOUNT</Text>

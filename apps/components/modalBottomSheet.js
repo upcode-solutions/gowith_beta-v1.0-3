@@ -16,7 +16,7 @@ export default function BottomSheet({ isVisible, onClose, backgroundColor, child
         isVisible={isVisible}
         onBackButtonPress={toggleBottomSheet}
         onBackdropPress={toggleBottomSheet}
-        backdropOpacity={.5}
+        backdropOpacity={.15}
         swipeDirection="down"
         onSwipeComplete={toggleBottomSheet}
         style={{ justifyContent: 'flex-end', margin: 0, padding: 0 }}

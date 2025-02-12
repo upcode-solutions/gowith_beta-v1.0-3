@@ -35,7 +35,7 @@ const personalInformation = ({ credentials, setCredentials, errorMessage }) => {
 
     //return ==============================================================
     return (
-        <View style={globalStyles.formCotainer}>
+        <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.constantWhite} size={25} />
                 <Text style={globalStyles.headerText}>PERSONAL INFORMATION</Text>
@@ -138,7 +138,7 @@ const contactInformation = ({ credentials, setCredentials, errorMessage, setActi
 
     //return ==============================================================
     return (
-        <View style={globalStyles.formCotainer}>
+        <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.constantWhite} size={25} />
                 <Text style={globalStyles.headerText}>CONTACT INFORMATION</Text>
@@ -218,7 +218,7 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
     //functions ================================================================
     const submitHandler = () => {
         setLoading(true);
-        if (generatedOtp.length < 1) { sendSMS(); }
+        if (generatedOtp?.length < 1) { sendSMS(); }
         else { verifyOtp(); }
     }
 
@@ -256,7 +256,7 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
 
     //return ===================================================================
     return (
-        <View style={globalStyles.formCotainer}>
+        <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.primary} size={25} />
                 <Text style={[globalStyles.headerText, { color: colors.primary }]}>PLEASE ENTER YOUR OTP</Text>
@@ -277,10 +277,10 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
             </View>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={globalStyles.primaryButton} onPress={() => submitHandler()}>
-                    <Text style={globalStyles.primaryButtonText}>{generatedOtp.length <= 0 ? 'SEND OTP SMS CODE' : 'VERIFY'}</Text>
+                    <Text style={globalStyles.primaryButtonText}>{generatedOtp?.length <= 0 ? 'SEND OTP SMS CODE' : 'VERIFY'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ opacity: cdTime > 0 || actionState.contactNumberVerified ? .5 : 1 }} onPress={() => sendSMS()} disabled={cdTime > 0 || actionState.contactNumberVerified}>
-                    <Text style={styles.resendOtp}>{generatedOtp.length <= 0 ? ' ' : cdTime > 0 ? `Didn't receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
+                    <Text style={styles.resendOtp}>{generatedOtp?.length <= 0 ? ' ' : cdTime > 0 ? `Didn't receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
                 </TouchableOpacity>
             </View>
         </View>

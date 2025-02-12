@@ -294,7 +294,7 @@ export default function Setup({ route, navigation }) {
             resizeMode="contain"
           />
 
-          <View style={styles.formCotainer}>
+          <View style={styles.formContainer}>
 
             <SetupSlider
               credentials={credentials}
@@ -384,7 +384,7 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height
   },
-  formCotainer: {
+  formContainer: {
     position: 'absolute',
     bottom: '2.5%',
     justifyContent: 'center',

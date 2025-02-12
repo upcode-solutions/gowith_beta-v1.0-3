@@ -55,6 +55,7 @@ export default function Suspended() {
                         const daysLeft = new Date(combinedSuspensionDate * 1000).toDateString();
                         setDaysLeft(daysLeft);
                     } else if (currentDate > combinedSuspensionDate) {
+                        setLoading(true)
                         console.log('suspension lifted');
                         const userDocRef = doc(firestore, localData.userType, localData.uid);
                         await updateDoc(userDocRef, { //update and +1 to the suspension counter
@@ -65,9 +66,7 @@ export default function Suspended() {
                         });
                     }
                 }
-            } catch (error) {
-                console.error('Error updating Firestore:', error);
-            }
+            } catch (error) { console.error('Error updating Firestore:', error); }
         };
 
         checkSuspension();

@@ -29,8 +29,8 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         zIndex: 1
     },
 
-    formCotainer: {
-        gap: gapadmar.sm
+    formContainer: {
+        gap: gapadmar.sm,
     },
     headerContainer: {
         flexDirection: 'row',
@@ -62,7 +62,6 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         alignSelf: 'center',
         textAlignVertical: 'center',
     },
-
     buttonContainer: {
         width: '100%',
         alignItems: 'center',
