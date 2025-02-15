@@ -214,7 +214,7 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
     const styles = createStyles(fonts, colors);
     //refenernces ==============================================================
     const [cdTime, setCdTime] = useState(0);
-
+    console.log(generatedOtp);
     //functions ================================================================
     const submitHandler = () => {
         setLoading(true);
@@ -226,9 +226,9 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
         let bgOtp = colors.form;
         if (errorMessage) {
             const loweredErrorMessage = errorMessage.toLowerCase();
-            if (loweredErrorMessage.includes('phone')) {
-                bgOtp = colors.errorRedText;
-            }
+            if (loweredErrorMessage.includes('phone') 
+                || loweredErrorMessage.includes('code')
+            ) { bgOtp = colors.errorRedText; }
         }
         return [bgOtp];
     }

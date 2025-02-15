@@ -14,10 +14,11 @@ import AuthSlider from './pages/sliderAuth'
 //firebase
 import { auth, firestore } from '../providers/firebase'
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 //react native components
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, use } from 'react'
 import { StyleSheet, Text, View, Image, ImageBackground, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Dimensions, Animated, Easing } from 'react-native'
+import { update } from 'firebase/database';
 
 export default function Auth({ navigation }) {
  
@@ -30,7 +31,7 @@ export default function Auth({ navigation }) {
   //local variables =========================================================================================
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState({ register: false, keyboardVisible: false, modalLoading: false });
-  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Angelo236!', confirmPassword: 'Angelo236!' });
+  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
   const [errorMessage, setErrorMessage] = useState('');
   //references ==============================================================================================
   const inputRef = useRef([]);
@@ -62,6 +63,7 @@ export default function Auth({ navigation }) {
       const userSnapshot = await getDocs(userQuery); //get user snapshot
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
+
         if (user?.personalInformation) { return { exist: true, type: type }; }
         else { return { exist: false, type: type }; }
       } 
@@ -75,9 +77,16 @@ export default function Auth({ navigation }) {
       const userCollection = collection(firestore, type);
       const userDoc = doc(userCollection, uid);
       const docSnapshot = await getDoc(userDoc);
-
+      
       if (docSnapshot.exists()) { 
-        await updateDoc(doc(firestore, type, uid), { accountDetails: { ...docSnapshot.data().accountDetails, deviceId: Device.deviceName } }); 
+        if (docSnapshot.data().personalInformation.password !== credentials.password) { 
+          updateDoc(userDoc, { 
+            'personalInformation.password': credentials.password,
+            'personalInformation.oldPassword': [...docSnapshot.data().personalInformation.oldPassword, docSnapshot.data().personalInformation.password],
+            'accountDetails.passwordChangedDate': serverTimestamp(),
+            'accountDetails.device': Device.deviceName
+           });
+        } else  { updateDoc(userDoc, { 'accountDetails.device': Device.deviceName }); }
         setFirestoreUserData(docSnapshot.data());
         setLocalData((prev) => ({ ...prev, email: email, uid: uid, password: password, userType: type }));
         setLocalControls((prev) => ({ ...prev, loggedIn: true }));
@@ -98,7 +107,7 @@ export default function Auth({ navigation }) {
         case credentials.password === '': errorHandler('Password is required. Please enter your password and try again.'); return;
         case credentials.confirmPassword === '': errorHandler('Confirm Password is required. Please enter your password and try again.'); return;
         case credentials.password !== credentials.confirmPassword: errorHandler('Passwords do not match. Please try again.'); return;
-        case credentials.password.length < 8: errorHandler('Password must be at least 8 characters long. Please try again.'); return;
+        case credentials.password.length < 8 && credentials.password.length > 15: errorHandler('Password must be at least 8 characters long. Please try again.'); return;
         case /\s/.test(credentials.password) || /\s/.test(credentials.confirmPassword): errorHandler('Password cannot contain spaces. Please try again.'); return;
         case !credentials.password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/): errorHandler('Password must have at least one lowercase, uppercase, number, and special character.'); return;
         case !emailValidator(credentials.usernameEmail): errorHandler('Domain is invalid. Email must be Gmail, Outlook, or Yahoo.'); return;
@@ -248,9 +257,9 @@ export default function Auth({ navigation }) {
               </TouchableOpacity>
               <View style={styles.optionsContainer}>
                 <TouchableOpacity onPress={() => toggleAction()}>
-                  <Text style={styles.toggleButton}>{actionState.register ? 'Already have an account? Sign-in' : 'Don\'t have an account? Join'}</Text>
+                  <Text style={styles.toggleButton}>{actionState.register ? 'Already have an account? Sign-in' : 'Don\'t have an account? Sign-up'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('RecoveryScreen')} disabled={actionState.register}>
+                <TouchableOpacity onPress={() => navigation.navigate('RecoveryStack')} disabled={actionState.register}>
                     <Text style={styles.toggleButton}>{!actionState.register ? 'Forgot Password?' : ' '}</Text>
                 </TouchableOpacity>
               </View>

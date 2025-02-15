@@ -22,6 +22,8 @@ let auth;
 try { auth = initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) }); } 
 catch (error) { auth = getAuth(app); }
 
+console.log("Auth initialized:", auth);
+
 //export firebase platforms
 export { auth, realtime, storage, firestore };
 

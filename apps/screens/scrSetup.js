@@ -4,9 +4,6 @@ import { useThemes } from '../providers/themes';
 import { useGlobalStyles } from '../providers/styles';
 import { useNotification } from '../providers/notification';
 import { textBeeConfig } from '../providers/keys';
-//firebase
-import { firestore } from '../providers/firebase'
-import { collection, query, where, getDocs, setDoc, doc, updateDoc } from 'firebase/firestore'
 //libraries
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +17,9 @@ import BottomSheet from '../components/modalBottomSheet';
 //sliders
 import SetupSlider from './pages/sliderSetup'
 import { OtpInput } from './pages/pagesSetup';
+//firebase
+import { firestore } from '../providers/firebase'
+import { collection, query, where, getDocs, setDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 //react native components
 import React, { useEffect, useState, useRef, use } from 'react'
 import { StyleSheet, Text, Image, ImageBackground, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Dimensions, Animated, Easing } from 'react-native'
@@ -39,6 +39,7 @@ export default function Setup({ route, navigation }) {
     const [errorMessage, setErrorMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
     const [generatedOtp, setGeneratedOtp] = useState('');
+    console.log(generatedOtp);
     const pagesCount = 2;
     //refenerences ============================================================================================================
     const logoOpacityRef = useRef(new Animated.Value(1)).current;
@@ -70,6 +71,9 @@ export default function Setup({ route, navigation }) {
     };
 
     const sendSMS = async () => { //verify contact number
+      
+        setErrorMessage('');
+
         try {
           switch (true) {
             case credentials.contactNumber === '': showNotification('Contact Number is required. Please try again.', 'error', 3000); return;
@@ -120,7 +124,7 @@ export default function Setup({ route, navigation }) {
         setErrorMessage('');
         setLoading(false);
       }
-      else { r
+      else {
         setLoading(false);
         errorHandler('Invalid OTP entered. Please check your SMS and try again.'); 
       }
@@ -137,7 +141,7 @@ export default function Setup({ route, navigation }) {
         case credentials.lastname === '': return errorHandler('Last name is required. Please enter your last name and try again.');
         case credentials.username === '': return errorHandler('Username is required. Please enter your username and try again.');
         case /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(credentials.username): return errorHandler('Username must not contain special characters. Please try again.');
-        case credentials.username.length < 9: return errorHandler('Username must be at least 5 characters long. Please try again.');
+        case credentials.username.length < 5: return errorHandler('Username must be at least 5 characters long. Please try again.');
         case credentials.contactNumber === '': return errorHandler('Contact Number is required. Please enter your contact number and try again.');
         case credentials.contactNumber[0] === '0': return errorHandler('Contact Number cannot start with 0. Please try again.');
         case credentials.contactNumber.length < 10 || credentials.contactNumber.length > 11: return errorHandler('Contact Number must be at least 10 digits long. Please try again.');
@@ -172,13 +176,14 @@ export default function Setup({ route, navigation }) {
             userType: authLocalData?.type,
             accountUid: authLocalData?.uid,
             accountStatus: 'unverified',
-            dateCreated: `${new Date().getMonth()}/${new Date().getDate()}/${new Date().getFullYear()}`,
+            dateCreated: serverTimestamp(),
             suspensionDate: ``,
             suspensionDuration: ``,
             suspensionReason: ``,
             suspensionAmount: 0,
             deviceId: Device.deviceName,
             flags: '',
+            passwordChangedDate: ''
           },
           personalInformation: {
             firstName: credentials.firstname,
@@ -188,6 +193,8 @@ export default function Setup({ route, navigation }) {
             dateOfBirth: `${credentials.dob.month}/${credentials.dob.date}/${credentials.dob.year}`,
             weight: credentials.weight,
             email: authLocalData?.email,
+            password: authLocalData?.password,
+            oldPassword: [],
           },
           emergencyContacts: {},
           bookingDetails: {},

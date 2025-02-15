@@ -10,7 +10,7 @@ import { remove, ref, get } from 'firebase/database';
 import * as Location from 'expo-location';
 //react native components
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { View, Image, Alert, StyleSheet, Animated } from 'react-native';
+import { View, Image, Alert, StyleSheet, Animated, Linking, ToastAndroid } from 'react-native';
 
 const ControlsContext = createContext();
 
@@ -31,7 +31,7 @@ const ControlsProvider = ({ children }) => {
         signOut(auth);
         setFirestoreUserData({});
         setLocalData({});
-        setLocalControls((prev) => ({ ...prev, loggedIn: false, endSession: endSession }));
+        setLocalControls((prev) => ({ ...prev, loggedIn: false, endSession: endSession, cdTimestamp: null }));
         //add remove logic
     }
 
@@ -101,7 +101,10 @@ const ControlsProvider = ({ children }) => {
                 catch (error) { console.warn("controls - updateFirestoreUserData", error); } 
                 finally { 
                     const requestForegroundPermissions = async () => (await Location.requestForegroundPermissionsAsync()).status === 'granted'; //ASK FOR LOCATION PERMISSION
-                    if (!await requestForegroundPermissions()) { return Alert.alert('Location permission not granted, Please enable location services in settings'); }
+                    if (!await requestForegroundPermissions()) { 
+                        Linking.openSettings(); //OPEN LOCATION SETTINGS
+                        ToastAndroid.show('Location permission is required to use this app', ToastAndroid.SHORT);
+                    }
                     setTimeout(() => { setLoading(false); }, 1500);
                 }
             }

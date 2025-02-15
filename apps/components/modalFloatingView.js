@@ -7,9 +7,6 @@ import { StyleSheet, View } from 'react-native'
 
 export default function FloatingView({ isVisible, onClose, height, width, backdropColor, backdropOpacity, children }) {
 
-    //local variables
-    const styles = createStyles(height, width);
-
     return (
         <SafeAreaView>
             <Modal
@@ -23,7 +20,7 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
                 animationIn={'zoomIn'}
                 animationOut={'zoomOut'}
             >
-                <View style={styles.container}>
+                <View style={[styles.container, { height: height, width: width }]}>
                     {children}
                 </View>
             </Modal>
@@ -31,10 +28,8 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
     )
 }
 
-const createStyles = (height, width) => StyleSheet.create({
+const styles = () => StyleSheet.create({
     container: {
-        height: height,
-        width: width,
         borderRadius: 15,
         overflow: 'hidden',
         shadowColor: '#000',

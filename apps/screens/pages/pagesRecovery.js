@@ -4,7 +4,7 @@ import { useGlobalStyles } from '../../providers/styles';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 //react native components
-import React, { useState, useRef } from 'react'
+import React, { useRef } from 'react'
 import { StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native'
 
 const LoginViaEmail = ({ credentials, setCredentials, errorMessage }) => {
@@ -14,14 +14,24 @@ const LoginViaEmail = ({ credentials, setCredentials, errorMessage }) => {
     const styles = createStyles(fonts, colors);
     const inputRef = useRef([]);
 
+    const backgroundColorHandler = () => {
+        let bgEmail = colors.form;
+        let bgUsername = colors.form;
+        if (errorMessage) {
+            const loweredErrorMessage = errorMessage.toLowerCase();
+            if (loweredErrorMessage.includes('email')) { bgEmail = colors.errorRedText; }
+            if (loweredErrorMessage.includes('username')) { bgUsername = colors.errorRedText; }
+        }
+        return [bgEmail, bgUsername];
+    }
+
     return (
         <View style={globalStyles.formContainer}>
             <View style={globalStyles.headerContainer}>
                 <Ionicons name="key" color={colors.constantWhite} size={25} />
                 <Text style={globalStyles.headerText}>ENTER YOUR EMAIL AND USERNAME</Text>
             </View>
-            {errorMessage && <Text style={globalStyles.errorText}>{String(errorMessage)}</Text>}
-            <View style={[globalStyles.textBox, styles.horizontalContainer]}>
+            <View style={[globalStyles.textBox, styles.horizontalContainer, { backgroundColor: backgroundColorHandler()[0] }]}>
                 <TextInput
                     style={[globalStyles.input, { flex: 1 }]}
                     placeholder="Email Address"
@@ -37,7 +47,7 @@ const LoginViaEmail = ({ credentials, setCredentials, errorMessage }) => {
                     <Ionicons name="close" color={rgba(colors.primary, 1)} size={20} />
                 </TouchableOpacity>
             </View>
-            <View style={[globalStyles.textBox, styles.horizontalContainer]}>
+            <View style={[globalStyles.textBox, styles.horizontalContainer, { backgroundColor: backgroundColorHandler()[1] }]}>
                 <TextInput
                     style={[globalStyles.input, { flex: 1 }]}
                     placeholder="Username"
@@ -85,7 +95,7 @@ const LoginViaSMS = ({ credentials, setCredentials, errorMessage, actionState, s
                     blurOnSubmit
                     maxLength={10}
                 />
-                <TouchableOpacity onPress={() => setActionState({ ...actionState, otpModal: true })}>
+                <TouchableOpacity onPress={() => setActionState({ ...actionState, otpModal: true })} disabled={credentials.contactNumber.length < 10}>
                     <Text style={styles.verify}>VERIFY</Text>
                 </TouchableOpacity>
             </View>
