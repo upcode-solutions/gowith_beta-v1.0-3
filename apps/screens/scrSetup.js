@@ -202,7 +202,9 @@ export default function Setup({ route, navigation }) {
         };
         
         if (authLocalData.type === 'clients') { await setDoc(userRef, firestoreUserData); } //set user document
-        else if (authLocalData.type === 'riders') { await updateDoc(userRef, firestoreUserData); }
+        else if (authLocalData.type === 'riders') { await updateDoc(userRef, {
+          
+        }); }
         else { errorHandler('An error has occurred. Please try again.'); }
 
         setLocalData (prev => ({ ...prev, email: authLocalData?.email, uid: authLocalData?.uid, password: authLocalData?.password, userType: authLocalData?.type }));

@@ -116,9 +116,8 @@ export default function RecoveryCredentials({ navigation }) {
   }
 
   const submitHandler = async() => {
-    
+
     setErrorMessage('');
-    setLoading(true);
 
     if (actionState.recoverViaEmail) {
       

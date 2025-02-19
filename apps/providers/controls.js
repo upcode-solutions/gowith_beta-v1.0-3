@@ -28,6 +28,8 @@ const ControlsProvider = ({ children }) => {
     const progress = useRef(new Animated.Value(0)).current;
 
     const initiateLogoutHandler = async (endSession) => { //log out handler function
+        console.log("initiateLogoutHandler");
+        
         signOut(auth);
         setFirestoreUserData({});
         setLocalData({});

@@ -3,7 +3,7 @@ import Modal from 'react-native-modal'
 import { SafeAreaView } from 'react-native-safe-area-context'
 //react native components
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
+import { View } from 'react-native'
 
 export default function FloatingView({ isVisible, onClose, height, width, backdropColor, backdropOpacity, children }) {
 
@@ -20,19 +20,10 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
                 animationIn={'zoomIn'}
                 animationOut={'zoomOut'}
             >
-                <View style={[styles.container, { height: height, width: width }]}>
+                <View style={{ height: height, width: width, borderRadius: 12, overflow: 'hidden', shadowColor: '#000', elevation: 5 }}>
                     {children}
                 </View>
             </Modal>
         </SafeAreaView>
     )
 }
-
-const styles = () => StyleSheet.create({
-    container: {
-        borderRadius: 15,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        elevation: 5,
-    },
-})
