@@ -29,7 +29,7 @@ const ControlsProvider = ({ children }) => {
 
     const initiateLogoutHandler = async (endSession) => { //log out handler function
         console.log("initiateLogoutHandler");
-        
+        //setLocalControls((prev) => ({ ...prev, endSession: endSession }));
         signOut(auth);
         setFirestoreUserData({});
         setLocalData({});
@@ -105,9 +105,10 @@ const ControlsProvider = ({ children }) => {
                     const requestForegroundPermissions = async () => (await Location.requestForegroundPermissionsAsync()).status === 'granted'; //ASK FOR LOCATION PERMISSION
                     if (!await requestForegroundPermissions()) { 
                         Linking.openSettings(); //OPEN LOCATION SETTINGS
-                        ToastAndroid.show('Location permission is required to use this app', ToastAndroid.SHORT);
+                        ToastAndroid.show('Location permission is required to use this app', ToastAndroid.LONG);
+                        return;
                     }
-                    setTimeout(() => { setLoading(false); }, 1500);
+                    setLoading(false);
                 }
             }
 
@@ -144,10 +145,7 @@ const ControlsProvider = ({ children }) => {
                 <Image style={styles.logo} source={require('../assets/images/logoLight.png')} />
                 <View style={styles.progressBarContainer}>
                     <Animated.View style={[styles.progressBar, { 
-                        width: progress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0%', '100%']
-                        }) 
+                        width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) 
                     }]} />
                 </View>
             </View>

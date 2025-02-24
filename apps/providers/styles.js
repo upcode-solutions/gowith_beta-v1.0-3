@@ -99,4 +99,15 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         color: colors.constantWhite,
         alignSelf: 'center',
     },
+    bottomContainer:{
+        position: 'absolute',
+        bottom: 0,
+        height: 'fit-content',
+        width: '100%',
+        justifyContent: 'space-between',
+        paddingHorizontal: 25,
+        paddingVertical: '5%',
+        zIndex: 1,
+        gap: 10,
+    }
 });

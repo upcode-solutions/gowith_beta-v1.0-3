@@ -18,7 +18,7 @@ export default function DrawerHeader() {
   return (
     <View style={styles.header}>
       <TouchableOpacity style={styles.drawerButton} onPress={() => navigation.toggleDrawer()}>
-        <Ionicons name="menu" size={22} color="white" />
+        <Ionicons name="menu" size={25} color="white" />
       </TouchableOpacity>
     </View>
   )
@@ -29,13 +29,13 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
         position: 'absolute',
         top: 0,
         width: '100%',
-        paddingVertical: '5%',
-        paddingHorizontal: 20,
+        paddingVertical: 15,
+        paddingHorizontal: 15,
     },
     drawerButton: {
         backgroundColor: colors.primary,
-        width: 47.5,
-        height: 47.5,
+        width: 45,
+        height: 45,
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',

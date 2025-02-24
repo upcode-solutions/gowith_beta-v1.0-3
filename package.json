@@ -35,7 +35,8 @@
     "react-native-toast-message": "1.4.0",
     "@react-native-community/datetimepicker": "8.2.0",
     "expo-screen-orientation": "~8.0.4",
-    "react-native-maps": "1.18.0"
+    "react-native-maps": "1.18.0",
+    "expo-sensors": "~14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

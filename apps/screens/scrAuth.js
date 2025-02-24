@@ -31,7 +31,7 @@ export default function Auth({ navigation }) {
   //local variables =========================================================================================
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState({ register: false, keyboardVisible: false, modalLoading: false });
-  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
+  const [credentials, setCredentials] = useState({ usernameEmail: 'dominguezrezangelo2@gmail.com', password: 'Noxsie236!', confirmPassword: 'Noxsie236!' });
   const [errorMessage, setErrorMessage] = useState('');
   //references ==============================================================================================
   const inputRef = useRef([]);
@@ -63,7 +63,6 @@ export default function Auth({ navigation }) {
       const userSnapshot = await getDocs(userQuery); //get user snapshot
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
-
         if (user?.personalInformation) { return { exist: true, type: type }; }
         else { return { exist: false, type: type }; }
       } 
@@ -81,12 +80,12 @@ export default function Auth({ navigation }) {
       if (docSnapshot.exists()) { 
         if (docSnapshot.data().personalInformation.password !== credentials.password) { 
           updateDoc(userDoc, { 
+            'accountDetails.deviceId': Device.deviceName,
             'personalInformation.password': credentials.password,
             'personalInformation.oldPassword': [...docSnapshot.data().personalInformation.oldPassword, docSnapshot.data().personalInformation.password],
             'accountDetails.passwordChangedDate': serverTimestamp(),
-            'accountDetails.device': Device.deviceName
            });
-        } else  { updateDoc(userDoc, { 'accountDetails.device': Device.deviceName }); }
+        } else  { updateDoc(userDoc, { 'accountDetails.deviceId': Device.deviceName }); }
         setFirestoreUserData(docSnapshot.data());
         setLocalData((prev) => ({ ...prev, email: email, uid: uid, password: password, userType: type }));
         setLocalControls((prev) => ({ ...prev, loggedIn: true }));

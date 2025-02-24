@@ -21,7 +21,7 @@ export default function DrawerClient() {
     //context providers
     const { fonts, colors, rgba } = useThemes();
     //local variables
-    const styles = { font: fonts.Righteous, fontColor: colors.text, fontSize: 17, letterSpacing: 1, iconMarginLeft: 10, iconSize: 25, iconColor: colors.primary, border: 12 };
+    const styles = { font: fonts.Righteous, fontColor: colors.text, fontSize: 15, letterSpacing: 1, iconMarginLeft: 10, iconSize: 22.5, iconColor: colors.primary, border: 12 };
 
     const DrawerContent = (props) => ( //drawer content
         <DrawerContentScrollView contentContainerStyle={{flex: 1}} {...props}>
@@ -44,7 +44,7 @@ export default function DrawerClient() {
                 drawerActiveBackgroundColor: rgba(colors.secondary, 0.25),
                 drawerActiveTintColor: styles.iconColor,
                 drawerInactiveTintColor: colors.text,
-                drawerLabelStyle: { fontSize: 17.5, fontFamily: fonts.RubikSemiBold, marginHorizontal: 10, },
+                drawerLabelStyle: { fontSize: styles.fontSize, fontFamily: styles.font, marginHorizontal: 10, },
                 drawerItemStyle: { borderRadius: styles.border },
             }}
             drawerContent={(props) => <DrawerContent {...props} />}
@@ -55,10 +55,10 @@ export default function DrawerClient() {
                     title: 'BOOK NOW',
                     drawerIcon: ({ focused }) => (
                         <Ionicons 
-                        name={focused ? "navigate" : "navigate-outline"} 
-                        size={styles.iconSize} 
-                        color={focused ? styles.iconColor : colors.text} 
-                        style={{ marginLeft: styles.iconMarginLeft }}
+                            name={focused ? "navigate" : "navigate-outline"} 
+                            size={styles.iconSize} 
+                            color={focused ? styles.iconColor : colors.text} 
+                            style={{ marginLeft: styles.iconMarginLeft }}
                         />
                     )
                 }}
@@ -69,10 +69,10 @@ export default function DrawerClient() {
                     title: 'OPTIONS',
                     drawerIcon: ({ focused }) => (
                         <Ionicons 
-                        name={focused ? "cog" : "cog-outline"} 
-                        size={styles.iconSize} 
-                        color={focused ? styles.iconColor : colors.text} 
-                        style={{ marginLeft: styles.iconMarginLeft }}
+                            name={focused ? "cog" : "cog-outline"} 
+                            size={styles.iconSize} 
+                            color={focused ? styles.iconColor : colors.text} 
+                            style={{ marginLeft: styles.iconMarginLeft }}
                         />
                     )
                 }}
@@ -83,10 +83,10 @@ export default function DrawerClient() {
                     title: 'TRANSACTIONS',
                     drawerIcon: ({ focused }) => (
                         <Ionicons 
-                        name={focused ? "cash" : "cash-outline"} 
-                        size={styles.iconSize} 
-                        color={focused ? styles.iconColor : colors.text} 
-                        style={{ marginLeft: styles.iconMarginLeft }}
+                            name={focused ? "cash" : "cash-outline"} 
+                            size={styles.iconSize} 
+                            color={focused ? styles.iconColor : colors.text} 
+                            style={{ marginLeft: styles.iconMarginLeft }}
                         />
                     )
                 }}

@@ -13,9 +13,7 @@ const Stack = createNativeStackNavigator() //initiate stack
 export default function HomeStack() {
 
   //context variables
-  const { localData } = useControls();
-  console.log(localData.userType);
-  
+  const { localData } = useControls();  
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

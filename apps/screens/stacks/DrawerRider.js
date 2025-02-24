@@ -21,7 +21,7 @@ export default function DrawerRider() {
   //context providers
   const { fonts, colors, rgba } = useThemes();
   //local variables
-  const styles = { font: fonts.Righteous, fontColor: colors.text, fontSize: 17, letterSpacing: 1, iconMarginLeft: 10, iconSize: 25, border: 12 };
+  const styles = { font: fonts.Righteous, fontColor: colors.text, fontSize: 17, letterSpacing: 1, iconMarginLeft: 10, iconSize: 22.5, border: 12 };
 
   const DrawerContent = (props) => ( //drawer content
     <DrawerContentScrollView contentContainerStyle={{flex: 1}} {...props}>
@@ -44,7 +44,7 @@ export default function DrawerRider() {
         drawerActiveBackgroundColor: rgba(colors.primary, 0.25),
         drawerActiveTintColor: colors.secondary,
         drawerInactiveTintColor: colors.text,
-        drawerLabelStyle: { fontSize: 17.5, fontFamily: fonts.RubikSemiBold, marginHorizontal: 10, },
+        drawerLabelStyle: { fontSize: styles.fontSize, fontFamily: styles.font, marginHorizontal: 10, },
         drawerItemStyle: { borderRadius: styles.border },
         swipeEnabled: false
       }}

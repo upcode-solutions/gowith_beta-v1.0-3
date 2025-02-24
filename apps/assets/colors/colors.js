@@ -27,8 +27,8 @@ const neutral = {
     errorRedBackground: 'rgb(149, 8, 8)',           // #950808
     successGreenText: 'rgb(0, 255, 0)',             // #00FF00
     successGreenBackground: 'rgb(0, 128, 0)',       // #008000
-    warningYellowText: 'rgb(87, 74, 18)',           // #574A12
-    warningYellowBackground: 'rgb(182, 118, 23)',   // #B67617
+    warningYellowText: 'rgb(216, 192, 85)',           // #574A12
+    warningYellowBackground: 'rgb(205, 114, 4)',   // #B67617
     informationBlue: 'rgb(23, 224, 255)',           // #17E0FF
     //#263238
 }
