@@ -35,6 +35,7 @@ export default function RiderHome() {
     //{ longitude: 121.011, latitude: 14.5995, geoName: 'Makati', type: 'pickup' }, //makati
     //{ longitude: 120.9842, latitude: 14.5995, geoName: 'Manila', type: 'dropoff' }, //manila
   ]);
+  const [queueNumber, setQueueNumber] = useState(0);
   const [route, setRoute] = useState([]);
   const [heading, setHeading] = useState(0);
   const [tiltStatus, setTiltStatus] = useState(null);
@@ -115,14 +116,31 @@ export default function RiderHome() {
 
   
   //useEffects ===========================================================
-  useEffect(() => { //animation at first render
-    if (bookingPoints[0].latitude !== '' && bookingPoints[0].longitude !== '' && !actions.locationAnimated) {
-      setTimeout(() => { mapRef.current?.animateToRegion({ latitude: bookingPoints[0]?.latitude, longitude: bookingPoints[0]?.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
-      setActions((prev) => ({ ...prev, locationAnimated: true }));
+  useEffect(() => { 
+    const checkRiderQueue = async () => { //check the database if user is already on queue
+      try {
+        const realtimeDatabase = ['riders', 'bookings']
+        for( const database of realtimeDatabase ) {
+          
+          if( database === 'riders' ) {
+            const snapshot = await get(ref(realtime, database));
+            if (!snapshot.exists()) { return }
+            console.log(snapshot.val());
+          } else {
+            const snapshot = await get(ref(realtime, database));
+            if (!snapshot.exists()) { return }
+            console.log(snapshot.val());
+          }
+        }
+      } catch (error) { console.log(error); }
     }
-  }, [bookingPoints[0], heading, tiltStatus, bookingStatus, actions.locationAnimated]);
 
-  useEffect(() => {
+    checkRiderQueue();
+  }, []);
+
+  
+
+  useEffect(() => { //update and start location tracking
     let locationSubscription = null;
     
     const startLocationTracking = async () => {
@@ -148,43 +166,45 @@ export default function RiderHome() {
             const { username, firstName, lastName } = firestoreUserData.personalInformation;
             const { plateNumber, vehicleColor, vehicleModel } = firestoreUserData.vehicleDetails;
   
-            if (currentCity === city) {
-              // 🔥 Just update the location in the same city
-              await update(ref(realtime, `riders/${city}/${username}/statusDetails/location`), { latitude, longitude });
-            } else {
-              // 🔥 City changed → Remove from old city & add to new city
+            if (currentCity === city) { 
+              // ✅ Update location & queue number
+              await update(ref(realtime, `riders/${city}/${username}/statusDetails`), { 
+                location: { latitude, longitude },
+                queueNumber: queueNumber  // Ensure queueNumber is updated
+              });
+            } else { 
+              // ✅ Remove rider from previous city
               const ridersRef = ref(realtime, `riders`);
               const snapshot = await get(ridersRef);
   
               if (snapshot.exists()) {
                 const cities = Object.keys(snapshot.val());
-                for (let cityName of cities) {
-                  await remove(ref(realtime, `riders/${cityName}/${username}`));
+                for (let cityName of cities) {  
+                  await remove(ref(realtime, `riders/${cityName}/${username}`));  
                 }
               }
   
+              // ✅ Assign a new queue number
+              const cityQueueRef = ref(realtime, `riders/${currentCity}`);
+              const citySnapshot = await get(cityQueueRef);
+              const newQueueNumber = citySnapshot.exists() ? Object.keys(citySnapshot.val()).length + 1 : 1;
+  
               await set(ref(realtime, `riders/${currentCity}/${username}`), {
-                personalInformation: { username, firstName, lastName, plateNumber, vehicleColor, vehicleModel },
-                vehicleInformation: { plateNumber, vehicleColor, vehicleModel },
+                personalInformation: { username, firstName, lastName, queueNumber: newQueueNumber },
+                vehicleInformation: { plateNumber, vehicleColor, vehicleModel  },
                 statusDetails: { location: { latitude, longitude }, heading, tiltStatus, city: currentCity }
               });
   
+              setQueueNumber(newQueueNumber); // Update state
               setCity(currentCity);
             }
-          } else {
-            setCity(currentCity);
+          } else { 
+            setCity(currentCity); 
           }
         }
       );
     };
-  
-    startLocationTracking();
-    return () => { if (locationSubscription) locationSubscription.remove(); };
-  
-  }, [bookingStatus]);
-  
 
-  useEffect(() => { //listen to heading and tild
     const statusListener = async () => {
       const headingListener = await Location.watchHeadingAsync((headingData) => { setHeading(headingData.trueHeading); });
   
@@ -194,9 +214,19 @@ export default function RiderHome() {
     
       return () => { headingListener.remove(); tiltListener.remove(); };
     }
-
+  
     if (bookingStatus === 'active' || bookingStatus === 'onQueue') { statusListener(); }
+    startLocationTracking();
+    return () => { if (locationSubscription) locationSubscription.remove(); };
+  
   }, [bookingStatus]);
+
+  useEffect(() => { //animation at first render
+    if (bookingPoints[0].latitude !== '' && bookingPoints[0].longitude !== '' && !actions.locationAnimated) {
+      setTimeout(() => { mapRef.current?.animateToRegion({ latitude: bookingPoints[0]?.latitude, longitude: bookingPoints[0]?.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
+      setActions((prev) => ({ ...prev, locationAnimated: true }));
+    }
+  }, [bookingPoints[0], heading, tiltStatus, bookingStatus, actions.locationAnimated]);
 
   useEffect(() => { //update rider status
     let lastHeading = heading;
@@ -237,6 +267,8 @@ export default function RiderHome() {
       updateRiderStatus();
     }
   }, [bookingStatus, heading, tiltStatus]);
+
+
   
   //render ===============================================================
   if (loading) { //loading screen

@@ -31,7 +31,7 @@ export default function Auth({ navigation }) {
   //local variables =========================================================================================
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState({ register: false, keyboardVisible: false, modalLoading: false });
-  const [credentials, setCredentials] = useState({ usernameEmail: 'dominguezrezangelo2@gmail.com', password: 'Noxsie236!', confirmPassword: 'Noxsie236!' });
+  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
   const [errorMessage, setErrorMessage] = useState('');
   //references ==============================================================================================
   const inputRef = useRef([]);
