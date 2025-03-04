@@ -75,7 +75,6 @@ export default function RecoveryCredentials({ navigation }) {
         let otp
         do { otp = Math.floor(100000 + Math.random() * 900000).toString(); }
         while (otp === credentials.otp);
-        setGeneratedOtp(otp);
         setCredentials(prev => ({ ...prev, otp: '' }));
         
         const recepients = `+63${credentials.contactNumber}`;
@@ -88,6 +87,7 @@ export default function RecoveryCredentials({ navigation }) {
           setLoading(false);
           setLocalControls(prev => ({ ...prev, cdTimestamp: new Date().getTime() / 1000 }));
           showNotification('SMS has been sent. Please check your inbox.', 'success', 5000);
+          setGeneratedOtp(otp);
         }
       } else { throw new Error('Contact Number does not exist. Please try again.'); }
 

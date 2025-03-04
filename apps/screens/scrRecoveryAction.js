@@ -53,6 +53,7 @@ export default function RecoveryAction({ route, navigation }) {
     }
     return [bgPassword, bgConfirmPassword];
   }
+  
   const handleRecovery = async () => {
     setErrorMessage('');
     setActionState((prev) => ({ ...prev, loadingModal: true }));

@@ -31,7 +31,10 @@ export default function RiderHome() {
   const [loading, setLoading] = useState(true);
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
+    { longitude: '', latitude: '', geoName: '', type: 'pickup' },
+    { longitude: '', latitude: '', geoName: '', type: 'dropoff' },
     { longitude: '', latitude: '', geoName: '', type: 'riders' },
+    { longitude: '', latitude: '', geoName: '', type: 'clients' },
     //{ longitude: 121.011, latitude: 14.5995, geoName: 'Makati', type: 'pickup' }, //makati
     //{ longitude: 120.9842, latitude: 14.5995, geoName: 'Manila', type: 'dropoff' }, //manila
   ]);
@@ -125,11 +128,11 @@ export default function RiderHome() {
           if( database === 'riders' ) {
             const snapshot = await get(ref(realtime, database));
             if (!snapshot.exists()) { return }
-            console.log(snapshot.val());
+            //console.log(snapshot.val());
           } else {
             const snapshot = await get(ref(realtime, database));
             if (!snapshot.exists()) { return }
-            console.log(snapshot.val());
+            //console.log(snapshot.val());
           }
         }
       } catch (error) { console.log(error); }
@@ -154,11 +157,11 @@ export default function RiderHome() {
   
           setTimeout(() => { setLoading(false); }, 2500);
   
-          const currentCity = await Location.reverseGeocodeAsync({ latitude, longitude }).then(res => res[0]?.city);
+          const currentCity = await Location.reverseGeocodeAsync({ latitude, longitude })
   
           setBookingPoints((prev) => {
             const newPoints = [...prev];
-            newPoints[0] = { ...newPoints[0], latitude, longitude };
+            newPoints[2] = { ...newPoints[2], latitude, longitude, geoName: currentCity[0].formattedAddress };
             return newPoints;
           });
   
@@ -166,14 +169,12 @@ export default function RiderHome() {
             const { username, firstName, lastName } = firestoreUserData.personalInformation;
             const { plateNumber, vehicleColor, vehicleModel } = firestoreUserData.vehicleDetails;
   
-            if (currentCity === city) { 
-              // ✅ Update location & queue number
+            if (currentCity[0].city === city) { // Update rider location
               await update(ref(realtime, `riders/${city}/${username}/statusDetails`), { 
                 location: { latitude, longitude },
                 queueNumber: queueNumber  // Ensure queueNumber is updated
               });
-            } else { 
-              // ✅ Remove rider from previous city
+            } else { // Remove rider from previous city
               const ridersRef = ref(realtime, `riders`);
               const snapshot = await get(ridersRef);
   
@@ -222,7 +223,7 @@ export default function RiderHome() {
   }, [bookingStatus]);
 
   useEffect(() => { //animation at first render
-    if (bookingPoints[0].latitude !== '' && bookingPoints[0].longitude !== '' && !actions.locationAnimated) {
+    if (bookingPoints[2].latitude !== '' && bookingPoints[2].longitude !== '' && !actions.locationAnimated) {
       setTimeout(() => { mapRef.current?.animateToRegion({ latitude: bookingPoints[0]?.latitude, longitude: bookingPoints[0]?.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
       setActions((prev) => ({ ...prev, locationAnimated: true }));
     }
@@ -289,9 +290,9 @@ export default function RiderHome() {
 
       <View style={[globalStyles.bottomContainer, { paddingHorizontal: 0, paddingVertical: 0 }]}>
         <TouchableOpacity 
-          style={[globalStyles.primaryButton, styles.locationButton, { opacity: bookingPoints[0].latitude && bookingPoints[0].longitude ? 1 : 0.5 }]}
-          disabled={!bookingPoints[0].latitude || !bookingPoints[0].longitude}
-          onPress={() => mapRef.current?.animateToRegion({ latitude: bookingPoints[0]?.latitude, longitude: bookingPoints[0]?.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 })}
+          style={[globalStyles.primaryButton, styles.locationButton, { opacity: bookingPoints[2].latitude && bookingPoints[2].longitude ? 1 : 0.5 }]}
+          disabled={!bookingPoints[2].latitude || !bookingPoints[2].longitude}
+          onPress={() => mapRef.current?.animateToRegion({ latitude: bookingPoints[2]?.latitude, longitude: bookingPoints[2]?.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 })}
         >
           <Ionicons name="locate-outline" size={22} color="white" />
         </TouchableOpacity>

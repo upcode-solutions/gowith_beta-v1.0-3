@@ -279,8 +279,11 @@ const OtpInput = ({ credentials, setCredentials, actionState, errorMessage, send
                 <TouchableOpacity style={globalStyles.primaryButton} onPress={() => submitHandler()}>
                     <Text style={globalStyles.primaryButtonText}>{generatedOtp?.length <= 0 ? 'SEND OTP SMS CODE' : 'VERIFY'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ opacity: cdTime > 0 || actionState.contactNumberVerified ? .5 : 1 }} onPress={() => sendSMS()} disabled={cdTime > 0 || actionState.contactNumberVerified}>
-                    <Text style={styles.resendOtp}>{generatedOtp?.length <= 0 ? ' ' : cdTime > 0 ? `Didn't receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
+                <TouchableOpacity 
+                    onPress={() => sendSMS()} 
+                    disabled={cdTime > 0 || actionState.contactNumberVerified || generatedOtp?.length <= 0}
+                >
+                    <Text style={[styles.resendOtp, { opacity: cdTime > 0 || actionState.contactNumberVerified ? 1 : .5 }]}>{ cdTime > 0 ? `Didn't receive OTP? Resend in: ${cdTime}s` : 'Resend SMS OTP code'}</Text>
                 </TouchableOpacity>
             </View>
         </View>

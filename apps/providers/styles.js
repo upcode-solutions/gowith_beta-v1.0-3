@@ -49,6 +49,8 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: gapadmar.lg,
+        //borderWidth: 1,
+        //borderColor: colors.primary,
         elevation: 2,
         shadowColor: colors.shadowColor,
     },
@@ -83,6 +85,19 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         color: colors.constantWhite,
         alignSelf: 'center',
     },
+    primaryHollowButton: {
+        width: '100%',
+        height: textBox.height / 2 ,
+        borderRadius: borderRadius.sm,
+        borderWidth: 1,
+        borderColor: colors.primary,  
+    },
+    primaryHollowButtonText: {
+        fontFamily: fonts.RubikRegular,
+        fontSize: fontSize.md,
+        color: colors.primary,
+        alignSelf: 'center',
+    },
     secondaryButton: {
         width: '100%',
         height: textBox.height,
@@ -100,14 +115,28 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         alignSelf: 'center',
     },
     bottomContainer:{
+        //backgroundColor: colors.background,
+        borderRadius: borderRadius.sm,
         position: 'absolute',
         bottom: 0,
         height: 'fit-content',
         width: '100%',
         justifyContent: 'space-between',
-        paddingHorizontal: 25,
+        paddingHorizontal: 15,
         paddingVertical: '5%',
-        zIndex: 1,
+        zIndex: 99,
         gap: 10,
-    }
+    },
+
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: gapadmar.xs,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1.5,
+        maxHeight: 1.5,
+        backgroundColor: colors.primary,
+    },
 });
