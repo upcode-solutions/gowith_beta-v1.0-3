@@ -29,7 +29,7 @@ const NotificationProvider = ({ children }) => {
     }
   };
 
-  const showNotification = (message, type = 'information', duration = 5000) => {
+  const showNotification = (message, type = 'nofication', duration = 5000) => {
 
     setNotification({ message, type });
     Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true, }).start();

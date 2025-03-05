@@ -2,6 +2,7 @@
 import { useControls } from '../providers/controls';
 import { useThemes } from '../providers/themes';
 import { useGlobalStyles } from '../providers/styles';
+import { useNotification } from '../providers/notification';
 //components
 import Loading from '../components/cmpLoading';
 import Mapview from '../components/cpmMapview';
@@ -11,6 +12,10 @@ import LocationInput from '../components/cmpLocationInput';
 //libraries
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+//firebase
+import { realtime, firestore } from '../providers/firebase';
+import { set, ref, remove, push, get, onValue, update } from 'firebase/database';
+import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
 //react native hooks
 import React, { useState, useEffect, useRef } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, Easing } from 'react-native'
@@ -18,20 +23,26 @@ import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, Easin
 export default function ClientHome() {
 
   //contexts providers ===================================================
-  const { localControls } = useControls();
+  const { localControls, localData, firestoreUserData } = useControls();
   const { fonts, colors, rgba } = useThemes();
   const globalStyles = useGlobalStyles(fonts, colors, rgba);
   const styles = createStyles(fonts, colors, rgba);
+  const { showNotification } = useNotification();
   //local variables =======================================================
   const [loading, setLoading] = useState(true);
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
-    { longitude: '', latitude: '', geoName: '', type: 'pickup' },
-    { longitude: '', latitude: '', geoName: '', type: 'dropoff' },
-    { longitude: '' , latitude: '', geoName: '', type: 'riders' },
-    { longitude: '' , latitude: '', geoName: '', type: 'clients' },
+    { longitude: '', latitude: '', geoName: 'Makati', city: '', type: 'pickup' }, //manila bay
+    { longitude: '', latitude: '', geoName: 'Instramuros', city: '', type: 'dropoff' }, // mall of asia
+    { longitude: 121.0577140 , latitude: 14.6192831, geoName: 'Gateway Aranet Cubao', city: 'Quezon City', type: 'riders' },
+    { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
-  const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0'  });
+
+  console.log(bookingPoints);
+  
+  //console.log(localData)
+  const [riderDetails, setRiderDetails] = useState({ username: 'username', contactNumber: '09562517907', plateNumber: 'KLT 1234', color: 'green',  });
+  const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', });
   const [actions, setActions] = useState({ locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, onFocus: '' });
   
   //references ============================================================
@@ -42,53 +53,88 @@ export default function ClientHome() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2, // Detect small drags
-      onPanResponderGrant: () => {
-        animatedY.setOffset(animatedY.__getValue()); // Save current position
-        animatedY.setValue(0); // Reset animated value to zero before moving
+      onPanResponderGrant: () => { // On drag start
+        animatedY.setOffset(animatedY.__getValue());
+        animatedY.setValue(0);
       },
-      onPanResponderMove: (_, gesture) => {
-        animatedY.setValue(gesture.dy); // Update animation in real-time
-      },
-      onPanResponderRelease: (_, gesture) => {
-        animatedY.flattenOffset(); // Merge offset into base value
-        const shouldExpand = gesture.dy < -50 || gesture.vy < -0.5; // Detect upward swipe
+
+      onPanResponderMove: (_, gesture) => { animatedY.setValue(gesture.dy); },
+
+      onPanResponderRelease: (_, gesture) => { // On drag end
+        animatedY.flattenOffset();
+        const shouldExpand = gesture.dy < -50 || gesture.vy < -0.5; 
         const finalValue = shouldExpand ? 170 : 55;
   
-        Animated.timing(animatedY, {
-          toValue: finalValue,
-          duration: 300,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }).start();
+        Animated.timing(animatedY, { toValue: finalValue, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start();
       },
     })
   ).current;
-  
 
   //functions =============================================================
   const requestForegroundPermissions = async () => (await Location.requestForegroundPermissionsAsync()).status === 'granted';
 
-  const swapPoints = () => {
-
-    setBookingPoints((prev) => {
+  const swapPoints = () => { //swap pickup and dropoff
+    setBookingPoints((prev) => { //swap points
       const newPoints = [...prev];
-      const temp = newPoints[0];
-      newPoints[0] = newPoints[1];
-      newPoints[1] = temp;
+      const tempPoints = { latitude: newPoints[0].latitude, longitude: newPoints[0].longitude, geoName: newPoints[0].geoName };
+      newPoints[0] = { ...newPoints[0], latitude: newPoints[1].latitude, longitude: newPoints[1].longitude, geoName: newPoints[1].geoName };
+      newPoints[1] = { ...newPoints[1], latitude: tempPoints.latitude, longitude: tempPoints.longitude, geoName: tempPoints.geoName };
       return newPoints;
     });
 
     mapRef.current.fitToCoordinates(bookingPoints, { edgePadding: { top: 100, right: 100, bottom: 150, left: 100 }, animated: true });
   }
 
-  //useEffects ============================================================
-  useEffect(() => { //animation at first render
-      if (bookingPoints[3].latitude !== '' && bookingPoints[3].longitude !== '' && !actions.locationAnimated) {
-        setTimeout(() => { mapRef.current?.animateToRegion({ longitude: bookingPoints[3].longitude, latitude: bookingPoints[3].latitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
-        setActions((prev) => ({ ...prev, locationAnimated: true }));
-      }
-    }, [bookingPoints[3]]);
+  const bookingHandler = async() => {
+    const { username, contactNumber, weight } = firestoreUserData.personalInformation;
+    const { price, distance, duration } = bookingDetails;
+    const { city, bookingKey } = firestoreUserData.bookingDetails;
+    
+    try {
+      if (bookingStatus === 'onQueue' || bookingStatus === 'active') {
+        const { flag } = firestoreUserData.accountDetails; //accountDetails current flag
 
+        setBookingStatus('pending');
+        
+        await remove(ref(realtime, `bookings/${city}/${bookingKey}`));
+
+        await updateDoc(doc(firestore, localData.userType, localData.uid), { 
+          accountDetails: { ...firestoreUserData.accountDetails, flag: riderDetails.username !== '' ? flag + 1 : flag }, //accountDetails flag
+          bookingDetails: {} //remove booking key from firestore
+        });
+        
+        setTimeout(() => { setBookingStatus('inactive'); }, 3000);
+      } else if (bookingStatus === 'inactive') {
+        
+        setBookingStatus('pending');
+  
+        const key = push(ref(realtime, 'bookings')).key;
+        if(!key) { return; }
+
+        setBookingDetails({ ...bookingDetails, bookingKey: key });
+        
+        const bookingSnapshot = await get(ref(realtime, `bookings/${bookingPoints[0].city}`));
+        const bookingExists = bookingSnapshot.exists() ? bookingSnapshot.size : 0;
+        const queueNumber = bookingExists + 1;
+  
+        await set(ref(realtime, `bookings/${bookingPoints[0].city}/${key}`), {
+          bookingDetails:{ bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration },
+          clientInformation:{ username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1]},
+        });
+  
+        await updateDoc(doc(firestore, localData.userType, localData.uid), { 
+          bookingDetails: { ...firestoreUserData.bookingDetails, bookingKey: key, city: bookingPoints[0].city, timestamp: serverTimestamp() }, 
+        });
+  
+        setTimeout(() => { setBookingStatus('onQueue'); }, 3000);
+      }
+    } catch (error) { 
+      console.warn('Error submitting booking:', error);
+      setBookingStatus('inactive');
+    }
+  }
+
+  //useEffects ============================================================
   useEffect(() => {
     let locationSubscription = null;
 
@@ -98,16 +144,15 @@ export default function ClientHome() {
       locationSubscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 2.5 },
         async (location) => {
-          const { latitude, longitude } = location.coords;
+          const { latitude, longitude } = location.coords; 
           if (!latitude || !longitude) { return }
           
-          setTimeout(() => { setLoading(false); }, 2500);
-          
+          setTimeout(() => { setLoading(false); }, 2500); 
           const currentCity = await Location.reverseGeocodeAsync(location.coords);
 
-          setBookingPoints((prev) => {
+          setBookingPoints((prev) => { //update client location
             const newPoint = [...prev];
-            newPoint[3] = { ...prev[3], longitude, latitude, geoName: currentCity[0].formattedAddress, type: 'clients' };
+            newPoint[3] = { ...prev[3], longitude, latitude, geoName: currentCity[0].formattedAddress, city: currentCity[0].city };
             return newPoint;
           });
         }
@@ -117,6 +162,50 @@ export default function ClientHome() {
     startLocationTracking();
     return () => { locationSubscription && locationSubscription.remove(); }
   }, []);
+
+  useEffect(() => {
+    showNotification('Client Home', 'success');
+  },[])
+
+  useEffect(() => { //animation at first render
+    if (bookingPoints[3].latitude !== '' && bookingPoints[3].longitude !== '' && !actions.locationAnimated) {
+      setTimeout(() => { mapRef.current?.animateToRegion({ longitude: bookingPoints[3].longitude, latitude: bookingPoints[3].latitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
+      setActions((prev) => ({ ...prev, locationAnimated: true }));
+    }
+  }, [bookingPoints[3]]);
+
+  useEffect(() => {
+    if (bookingStatus === 'onQueue' || bookingStatus === 'active') {
+      const { bookingKey, city } = firestoreUserData.bookingDetails;
+      const queueBookingRef = ref(realtime, `bookings/${city}`);
+  
+      const queueUnsubscribe = onValue(queueBookingRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const bookings = snapshot.val();
+          const sortedBookings = Object.entries(bookings)
+            .map(([key, value]) => ({ key, ...value.bookingDetails }))
+            .filter((booking) => booking.queueNumber)
+            .sort((a, b) => a.queueNumber - b.queueNumber);
+  
+          const updates = {};
+          let updateNeeded = false;
+  
+          sortedBookings.forEach((booking, index) => {
+            const correctQueueNumber = index + 1;
+  
+            if (booking.queueNumber !== correctQueueNumber) {
+              updateNeeded = true;
+              updates[`bookings/${city}/${booking.key}/bookingDetails/queueNumber`] = correctQueueNumber;
+            }
+          });
+  
+          if (updateNeeded) { update(ref(realtime), updates).catch((err) => console.error("Error updating queue:", err) ); }
+        }
+      });
+  
+      return () => queueUnsubscribe();
+    }
+  }, [bookingStatus]);  
 
   //render ================================================================
   if (loading) { //loading screen
@@ -195,7 +284,7 @@ export default function ClientHome() {
                 </Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.floatingContainerButton} onPress={() => swapPoints()}>
+            <TouchableOpacity style={styles.floatingContainerButton} onPress={() => swapPoints()} disabled={bookingStatus !== 'inactive'}>
               <Ionicons name="swap-vertical" size={17} color={colors.constantWhite}/>
             </TouchableOpacity>
             <TouchableOpacity 
@@ -216,8 +305,12 @@ export default function ClientHome() {
               <Ionicons style={styles.priceContainerIcon} name="information-circle-outline" onPress={() => setActions((prev) => ({ ...prev, fareDetailsVisible: true }))}/>
             </View>
           </View>
-          <TouchableOpacity style={globalStyles.primaryButton} onPress={() => {}}>
-            <Text style={globalStyles.primaryButtonText}>Edit Bookings</Text>
+          <TouchableOpacity 
+            style={[globalStyles.primaryButton, { opacity: bookingStatus === 'pending' ? 0.5 : 1 }]} 
+            onPress={() => bookingHandler()}
+            disabled={bookingStatus === 'pending' || bookingPoints[0].city === '' && bookingPoints[1].city === ''}
+          >
+            <Text style={globalStyles.primaryButtonText}>{bookingStatus === 'active' || bookingStatus === 'onQueue' ? 'Cancel Booking' : 'Book Now'}</Text>
           </TouchableOpacity>
         </View>
       </View>

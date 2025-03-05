@@ -37,9 +37,11 @@ export default function LocationInput({ setBookingPoints, bookingPoint, homeActi
             setHomeActions((prev) => ({ ...prev, fetchingLocation: true }));
             const coordinates = await Location.geocodeAsync(location.geoName)
             const { latitude, longitude } = coordinates[0];
+            const city = await Location.reverseGeocodeAsync({ latitude, longitude }).then((res) => res[0].city);
+            
             setBookingPoints((prev) => {
                 const newPoint = [...prev];
-                newPoint[count] = { ...newPoint[count], latitude, longitude, geoName: location.geoName };
+                newPoint[count] = { ...newPoint[count], latitude, longitude, geoName: location.geoName, city: city };
                 return newPoint;
             })
             setHomeActions((prev) => ({ ...prev, fetchingLocation: false }));

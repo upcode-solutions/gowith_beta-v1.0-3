@@ -182,7 +182,7 @@ export default function Setup({ route, navigation }) {
             suspensionReason: ``,
             suspensionAmount: 0,
             deviceId: Device.deviceName,
-            flags: '',
+            flags: 0,
             passwordChangedDate: ''
           },
           personalInformation: {

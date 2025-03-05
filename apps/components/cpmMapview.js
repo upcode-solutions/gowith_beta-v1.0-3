@@ -50,10 +50,9 @@ export default function Mapview({ points, mapRef, setBookingDetails, heading }) 
 
     //useEffects ================================================================
     useEffect(() => {
-        if (points[2].latitude && points[0].longitude && points[3].latitude && points[1].longitude) {
-            fetchRoute(points[2], points[3]);
-        }
-        if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
+        if (points[2].latitude && points[2].longitude) {
+            fetchRoute(points[2], points[0]);
+        }else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
             fetchRoute(points[0], points[1]);
         }
     },[points])

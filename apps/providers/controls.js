@@ -27,6 +27,7 @@ const ControlsProvider = ({ children }) => {
     //references
     const progress = useRef(new Animated.Value(0)).current;
 
+    //functions =================================================================
     const initiateLogoutHandler = async (endSession) => { //log out handler function
         console.log("initiateLogoutHandler");
         //setLocalControls((prev) => ({ ...prev, endSession: endSession }));
@@ -37,6 +38,21 @@ const ControlsProvider = ({ children }) => {
         //add remove logic
     }
 
+    const calculateProgress = () => { //calculate progress
+        let progress = 0;
+        if ( Object.keys(localData).length > 0 ) {
+            if ( firestoreUserData ) { progress += 0.25; }
+            if ( firestoreTransactionFee ) { progress += 0.25; }
+            if ( Object.keys(localControls).length > 0 ) { progress += 0.25; }
+            if ( Object.keys(localData).length > 0 ) { progress += 0.25; }
+        } else {
+            if ( firestoreTransactionFee ) { progress += 0.5; }
+            if ( Object.keys(localControls).length > 0 ) { progress += 0.5; }
+        }
+        return progress;
+    };
+
+    //useEffects ================================================================
     useEffect(() => { //fetch control and local data from AsyncStorage on app load
         const fetchStashedData = async () => { //fetch stashed data { localControls and localData }
             try {
@@ -116,7 +132,7 @@ const ControlsProvider = ({ children }) => {
         }
     }, [isReady]);
 
-    useEffect(() => {
+    useEffect(() => { //update progress bar
         const currentProgress = calculateProgress();
         Animated.timing(progress, {
             toValue: currentProgress,
@@ -125,20 +141,7 @@ const ControlsProvider = ({ children }) => {
         }).start();
     }, [localControls, localData, firestoreUserData, firestoreTransactionFee, isReady]);
     
-    const calculateProgress = () => {
-        let progress = 0;
-        if ( Object.keys(localData).length > 0 ) {
-            if ( firestoreUserData ) { progress += 0.25; }
-            if ( firestoreTransactionFee ) { progress += 0.25; }
-            if ( Object.keys(localControls).length > 0 ) { progress += 0.25; }
-            if ( Object.keys(localData).length > 0 ) { progress += 0.25; }
-        } else {
-            if ( firestoreTransactionFee ) { progress += 0.5; }
-            if ( Object.keys(localControls).length > 0 ) { progress += 0.5; }
-        }
-        return progress;
-    };
-    
+    //render ======================================================================
     if (loading) {
         return (
             <View style={styles.container}>
