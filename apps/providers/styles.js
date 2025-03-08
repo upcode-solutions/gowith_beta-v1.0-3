@@ -188,5 +188,41 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.primary,
         resizeMode: 'contain',
-    }
+    },
+    //bottom controls
+    bottomControls: {
+        width: '100%',
+        backgroundColor: colors.background,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 15,
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        gap: 10
+    },
+    priceContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        backgroundColor: colors.form,
+        borderRadius: 12,
+    },
+    priceDataContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+    },
+    priceContainerIcon: {
+        color: colors.primary,
+        fontSize: 20,
+    },
+    priceContainerText: {
+        fontFamily: fonts.Righteous,
+        fontSize: 15,
+        color: colors.text
+    },
 });

@@ -19,7 +19,7 @@ import { realtime, firestore } from '../providers/firebase';
 import { set, ref, remove, push, get, onValue, update } from 'firebase/database';
 import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
 //react native hooks
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, act } from 'react'
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
 
 export default function ClientHome() {
@@ -31,7 +31,6 @@ export default function ClientHome() {
   const styles = createStyles(fonts, colors, rgba);
   const { showNotification } = useNotification();
   //local variables =======================================================
-  const [loading, setLoading] = useState(true);
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
     { longitude: '', latitude: '', geoName: 'Makati', city: '', type: 'pickup' },
@@ -39,15 +38,10 @@ export default function ClientHome() {
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
-
-  //console.log(bookingPoints);
-  
-  //console.log(localData)
   const [riderDetails, setRiderDetails] = useState({});
   const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', });
   console.log(bookingDetails);
-  
-  const [actions, setActions] = useState({ locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, riderInformationVisible: false, onFocus: '' });
+  const [actions, setActions] = useState({ loading: true, locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, riderInformationVisible: false, onFocus: '' });
   
   //references ============================================================
   const mapRef = useRef(null);
@@ -134,7 +128,7 @@ export default function ClientHome() {
           const { latitude, longitude } = location.coords; 
           if (!latitude || !longitude) { return }
           
-          setTimeout(() => { setLoading(false); }, 2500); 
+          setTimeout(() => { setActions({ ...actions, loading: false }); }, 2500); 
           const currentCity = await Location.reverseGeocodeAsync(location.coords);
 
           setBookingPoints((prev) => { //update client location
@@ -232,7 +226,7 @@ export default function ClientHome() {
   }, [bookingStatus]);
   
   //render ================================================================
-  if (loading) { //loading screen
+  if (actions.loading) { //loading screen
     return (
       <Loading 
         loadingBackgroundColor={colors.background} 
@@ -269,20 +263,20 @@ export default function ClientHome() {
             <View style={{flex: 1}}>
               { Object.entries(riderDetails?.personalInformation ?? {}).map(([key, value], index) => (
                 <View key={index} style={styles.priceDataContainer}>
-                  <Text style={[styles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
-                  <Text style={styles.priceContainerText}>{value.toUpperCase()}</Text>
+                  <Text style={[globalStyles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
+                  <Text style={globalStyles.priceContainerText}>{value.toUpperCase()}</Text>
                 </View>
               ))}
             </View>
           </View>
           <View style={globalStyles.floatingViewDataContainer}>
-            <Text style={styles.priceContainerText}>VEHICLE INFORMATION</Text>
+            <Text style={globalStyles.priceContainerText}>VEHICLE INFORMATION</Text>
             <View style={globalStyles.dividerLine}/>
             { Object.entries(riderDetails?.vehicleInformation ?? {}).map(([key, value], index) => (
               key === 'username' || key === 'contactNumber' || key === 'weight' || key === 'imageURL' ? null :
               <View key={index} style={styles.priceDataContainer}>
-                <Text style={[styles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
-                <Text style={styles.priceContainerText}>{value.toUpperCase()}</Text>
+                <Text style={[globalStyles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
+                <Text style={globalStyles.priceContainerText}>{value.toUpperCase()}</Text>
               </View>
             ))}
           </View>
@@ -316,11 +310,11 @@ export default function ClientHome() {
           backgroundColor={colors.background}
         >
           <View style={{ gap: 10}}>
-            <View style={[styles.priceContainer, { flexDirection: `column`}]}>
+            <View style={[globalStyles.priceContainer, { flexDirection: `column`}]}>
               {Object.entries(bookingDetails).map(([key, value], index) => (
-                <View key={index} style={[styles.priceDataContainer, { width: '100%'}]}>
-                  <Text style={[styles.priceContainerText, { color: rgba(colors.text, 0.5) }]}>{key.toUpperCase()}</Text>
-                  <Text style={styles.priceContainerText}>{key === 'price' ? `₱ ${value}` : key === 'distance' ? `${value} km` : `~ ${Math.ceil(value)} min`}</Text>
+                <View key={index} style={[globalStyles.priceDataContainer, { width: '100%'}]}>
+                  <Text style={[globalStyles.priceContainerText, { color: rgba(colors.text, 0.5) }]}>{key.toUpperCase()}</Text>
+                  <Text style={globalStyles.priceContainerText}>{key === 'price' ? `₱ ${value}` : key === 'distance' ? `${value} km` : `~ ${Math.ceil(value)} min`}</Text>
                 </View>
               ))}
             </View>
@@ -342,12 +336,12 @@ export default function ClientHome() {
           />
         </View>
 
-        <View style={styles.bottomControls}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceContainerText}>PRICE</Text>
-            <View style={styles.priceDataContainer}>
-              <Text style={styles.priceContainerText}>{`₱ ${bookingDetails.price}`}</Text>
-              <Ionicons style={styles.priceContainerIcon} name="information-circle-outline" onPress={() => setActions((prev) => ({ ...prev, fareDetailsVisible: true }))}/>
+        <View style={globalStyles.bottomControls}>
+          <View style={globalStyles.priceContainer}>
+            <Text style={globalStyles.priceContainerText}>PRICE</Text>
+            <View style={globalStyles.priceDataContainer}>
+              <Text style={globalStyles.priceContainerText}>{`₱ ${bookingDetails.price}`}</Text>
+              <Ionicons style={globalStyles.priceContainerIcon} name="information-circle-outline" onPress={() => setActions((prev) => ({ ...prev, fareDetailsVisible: true }))}/>
             </View>
           </View>
           <TouchableOpacity 
@@ -393,40 +387,5 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
     borderTopRightRadius: 12,
     shadowColor: colors.shadowGray,
     elevation: 6,
-  },
-  bottomControls: {
-    width: '100%',
-    backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    gap: 10
-  },
-  priceContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: colors.form,
-    borderRadius: 12,
-  },
-  priceDataContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  priceContainerIcon: {
-    color: colors.primary,
-    fontSize: 20,
-  },
-  priceContainerText: {
-    fontFamily: fonts.Righteous,
-    fontSize: 15,
-    color: colors.text
   },
 })
