@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-export default function Mapview({ points, mapRef, setBookingDetails, heading }) {
+export default function Mapview({ points, mapRef, bookingDetails, setBookingDetails, heading }) {
 
     //context providers
     const { firestoreTransactionFee, localData } = useControls();
@@ -40,6 +40,7 @@ export default function Mapview({ points, mapRef, setBookingDetails, heading }) 
                 setBookingDetails((prev) => ({ ...prev, distance: 0, price: 0, duration: 0 }));
                 return;
             }else if (localData?.userType === 'clients') {
+                if(bookingDetails.distance > 0 && bookingDetails.price > 0 && bookingDetails.duration > 0) return;
                 const distance = (routes[0].distance / 1000).toFixed(2);
                 const price = distance <= 2 ? firestoreTransactionFee.minimumDistance : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
                 const duration = (routes[0].duration / 60).toFixed(2);
@@ -54,6 +55,14 @@ export default function Mapview({ points, mapRef, setBookingDetails, heading }) 
             fetchRoute(points[2], points[0]);
         }else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
             fetchRoute(points[0], points[1]);
+        }
+
+        if (points[0].latitude && points[0].longitude && points[2].latitude && points[2].longitude) {
+            mapRef.current.fitToCoordinates([points[0], points[2]], { edgePadding: { top: 50, right: 50, bottom: 250, left: 50 }, animated: true });
+        } else if (points[0].latitude && points[0].longitude && !points[1].latitude && !points[1].longitude) {
+            mapRef.current.animateCamera({ center: { latitude: points[0].latitude, longitude: points[0].longitude } });
+        } else if (points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
+            mapRef.current.fitToCoordinates([points[0], points[1]], { edgePadding: { top: 50, right: 50, bottom: 250, left: 50 }, animated: true });
         }
     },[points])
     

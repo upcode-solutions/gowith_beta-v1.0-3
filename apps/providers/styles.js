@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import FloatingView from '../components/modalFloatingView';
 
 const { width, height } = Dimensions.get('window');
 const textBox = { height: 45, width: '100%' };
@@ -134,9 +135,58 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         gap: gapadmar.xs,
     },
     dividerLine: {
-        flex: 1,
+        alignSelf: 'center',
+        width: '100%',
         height: 1.5,
         maxHeight: 1.5,
         backgroundColor: colors.primary,
     },
+
+    bookingInformationButton: {
+        flexDirection: 'row',
+        width: 'fit-content',
+        height: 45,
+        position: 'absolute',
+        top: 100,
+        right: 0,
+        borderTopLeftRadius: 12,
+        borderBottomLeftRadius: 12,
+        backgroundColor: colors.primary,
+        paddingHorizontal: 10,
+        zIndex: 99,
+    },
+    bookingInformationButtonIcon: {
+        color: colors.constantWhite,
+        fontSize: fontSize.lg,
+        alignSelf: 'center',
+    },
+
+    floatiingView: {
+        backgroundColor: colors.background,
+        padding: 15,
+        height: 'fit-content',
+        gap: gapadmar.sm
+    },
+    floatingViewDataContainer: {
+        backgroundColor: colors.form,
+        padding: 15,
+        borderRadius: borderRadius.sm,
+        gap: gapadmar.xs
+    },
+    floatingViewProfileContainer : {
+        flexDirection: 'row',
+        backgroundColor: rgba(colors.primary, .5),
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: borderRadius.sm,
+        gap: gapadmar.xs
+    },
+    floatingViewImage: {
+        width: 75,
+        height: 75,
+        borderRadius: 50,
+        borderWidth: 1,
+        borderColor: colors.primary,
+        resizeMode: 'contain',
+    }
 });

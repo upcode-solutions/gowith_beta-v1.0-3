@@ -66,7 +66,7 @@ export default function DrawerClient() {
 
             <Drawer.Screen name="Options" component={Options}
                 options={{
-                    title: 'OPTIONS',
+                    title: 'GENERAL SETTINGS',
                     drawerIcon: ({ focused }) => (
                         <Ionicons 
                             name={focused ? "cog" : "cog-outline"} 
@@ -83,7 +83,7 @@ export default function DrawerClient() {
                     title: 'TRANSACTIONS',
                     drawerIcon: ({ focused }) => (
                         <Ionicons 
-                            name={focused ? "cash" : "cash-outline"} 
+                            name={focused ? "newspaper" : "newspaper-outline"} 
                             size={styles.iconSize} 
                             color={focused ? styles.iconColor : colors.text} 
                             style={{ marginLeft: styles.iconMarginLeft }}

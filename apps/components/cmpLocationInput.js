@@ -44,6 +44,7 @@ export default function LocationInput({ setBookingPoints, bookingPoint, homeActi
                 newPoint[count] = { ...newPoint[count], latitude, longitude, geoName: location.geoName, city: city };
                 return newPoint;
             })
+
             setHomeActions((prev) => ({ ...prev, fetchingLocation: false }));
         } catch (e) { 
             console.log(e); 
@@ -60,6 +61,8 @@ export default function LocationInput({ setBookingPoints, bookingPoint, homeActi
                 newPoint[count] = { ...prev[count], geoName: location.geoName };
                 return newPoint;
             });
+
+            Keyboard.dismiss();
     
             setHomeActions((prev) => ({ ...prev, locationInputVisible: false }));
         } catch (e) {

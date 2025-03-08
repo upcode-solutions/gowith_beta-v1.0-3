@@ -8,7 +8,9 @@ import Loading from '../components/cmpLoading';
 import Mapview from '../components/cpmMapview';
 import BookingIndicator from '../components/cmpBookingIndicator';
 import BottomSheet from '../components/modalBottomSheet';
+import FloatingView from '../components/modalFloatingView';
 import LocationInput from '../components/cmpLocationInput';
+import PanLocations from '../components/cmpPanLocations';
 //libraries
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +20,7 @@ import { set, ref, remove, push, get, onValue, update } from 'firebase/database'
 import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
 //react native hooks
 import React, { useState, useEffect, useRef } from 'react'
-import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, Easing } from 'react-native'
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
 
 export default function ClientHome() {
 
@@ -32,77 +34,52 @@ export default function ClientHome() {
   const [loading, setLoading] = useState(true);
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
-    { longitude: '', latitude: '', geoName: 'Makati', city: '', type: 'pickup' }, //manila bay
-    { longitude: '', latitude: '', geoName: 'Instramuros', city: '', type: 'dropoff' }, // mall of asia
-    { longitude: 121.0577140 , latitude: 14.6192831, geoName: 'Gateway Aranet Cubao', city: 'Quezon City', type: 'riders' },
+    { longitude: '', latitude: '', geoName: 'Makati', city: '', type: 'pickup' },
+    { longitude: '', latitude: '', geoName: 'Instramuros', city: '', type: 'dropoff' },
+    { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
 
-  console.log(bookingPoints);
+  //console.log(bookingPoints);
   
   //console.log(localData)
-  const [riderDetails, setRiderDetails] = useState({ username: 'username', contactNumber: '09562517907', plateNumber: 'KLT 1234', color: 'green',  });
+  const [riderDetails, setRiderDetails] = useState({});
   const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', });
-  const [actions, setActions] = useState({ locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, onFocus: '' });
+  console.log(bookingDetails);
+  
+  const [actions, setActions] = useState({ locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, riderInformationVisible: false, onFocus: '' });
   
   //references ============================================================
   const mapRef = useRef(null);
-  const animatedY = useRef(new Animated.Value(170)).current; // Start collapsed
-  const animatedYClamped = animatedY.interpolate({ inputRange: [55, 170], outputRange: [170, 55], extrapolate: 'clamp', });
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2, // Detect small drags
-      onPanResponderGrant: () => { // On drag start
-        animatedY.setOffset(animatedY.__getValue());
-        animatedY.setValue(0);
-      },
-
-      onPanResponderMove: (_, gesture) => { animatedY.setValue(gesture.dy); },
-
-      onPanResponderRelease: (_, gesture) => { // On drag end
-        animatedY.flattenOffset();
-        const shouldExpand = gesture.dy < -50 || gesture.vy < -0.5; 
-        const finalValue = shouldExpand ? 170 : 55;
-  
-        Animated.timing(animatedY, { toValue: finalValue, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start();
-      },
-    })
-  ).current;
 
   //functions =============================================================
   const requestForegroundPermissions = async () => (await Location.requestForegroundPermissionsAsync()).status === 'granted';
-
-  const swapPoints = () => { //swap pickup and dropoff
-    setBookingPoints((prev) => { //swap points
-      const newPoints = [...prev];
-      const tempPoints = { latitude: newPoints[0].latitude, longitude: newPoints[0].longitude, geoName: newPoints[0].geoName };
-      newPoints[0] = { ...newPoints[0], latitude: newPoints[1].latitude, longitude: newPoints[1].longitude, geoName: newPoints[1].geoName };
-      newPoints[1] = { ...newPoints[1], latitude: tempPoints.latitude, longitude: tempPoints.longitude, geoName: tempPoints.geoName };
-      return newPoints;
-    });
-
-    mapRef.current.fitToCoordinates(bookingPoints, { edgePadding: { top: 100, right: 100, bottom: 150, left: 100 }, animated: true });
-  }
 
   const bookingHandler = async() => {
     const { username, contactNumber, weight } = firestoreUserData.personalInformation;
     const { price, distance, duration } = bookingDetails;
     const { city, bookingKey } = firestoreUserData.bookingDetails;
+    const { flag, accountStatus } = firestoreUserData.accountDetails; //accountDetails current flag
     
     try {
       if (bookingStatus === 'onQueue' || bookingStatus === 'active') {
-        const { flag } = firestoreUserData.accountDetails; //accountDetails current flag
 
         setBookingStatus('pending');
         
         await remove(ref(realtime, `bookings/${city}/${bookingKey}`));
 
         await updateDoc(doc(firestore, localData.userType, localData.uid), { 
-          accountDetails: { ...firestoreUserData.accountDetails, flag: riderDetails.username !== '' ? flag + 1 : flag }, //accountDetails flag
+          accountDetails: { ...firestoreUserData.accountDetails, flag: riderDetails?.personalInformation !== '' ? flag + 1 : flag }, //accountDetails flag
           bookingDetails: {} //remove booking key from firestore
         });
-        
+
+        setRiderDetails({});
+        setBookingDetails({ price: '0', duration: '0', distance: '0', });
+        setBookingPoints((prev) => {
+          const newPoints = [...prev];
+          newPoints[2] = { longitude: '', latitude: '', geoName: '', city: '', type: 'riders' };
+          return newPoints;
+        });
         setTimeout(() => { setBookingStatus('inactive'); }, 3000);
       } else if (bookingStatus === 'inactive') {
         
@@ -114,19 +91,28 @@ export default function ClientHome() {
         setBookingDetails({ ...bookingDetails, bookingKey: key });
         
         const bookingSnapshot = await get(ref(realtime, `bookings/${bookingPoints[0].city}`));
-        const bookingExists = bookingSnapshot.exists() ? bookingSnapshot.size : 0;
-        const queueNumber = bookingExists + 1;
+        const bookingData = bookingSnapshot.exists() ? bookingSnapshot.val() : {};
+        let queueNumber;
+
+        if (accountStatus === 'unverified') {
+          queueNumber = Object.keys(bookingData).length + 1
+        } else {
+          const filterVerifiedUsers = Object.keys(bookingData).filter((key) => bookingData[key].bookingDetails.accountStatus === 'verified');
+          queueNumber = filterVerifiedUsers.length + 1
+        }
   
-        await set(ref(realtime, `bookings/${bookingPoints[0].city}/${key}`), {
-          bookingDetails:{ bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration },
-          clientInformation:{ username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1]},
-        });
-  
-        await updateDoc(doc(firestore, localData.userType, localData.uid), { 
-          bookingDetails: { ...firestoreUserData.bookingDetails, bookingKey: key, city: bookingPoints[0].city, timestamp: serverTimestamp() }, 
-        });
-  
-        setTimeout(() => { setBookingStatus('onQueue'); }, 3000);
+        if (queueNumber && queueNumber > 0) {
+          await set(ref(realtime, `bookings/${bookingPoints[0].city}/${key}`), {
+            bookingDetails:{ bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration, accountStatus: accountStatus },
+            clientInformation:{ username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1]},
+          });
+    
+          await updateDoc(doc(firestore, localData.userType, localData.uid), { 
+            bookingDetails: { ...firestoreUserData.bookingDetails, bookingKey: key, city: bookingPoints[0].city, timestamp: serverTimestamp() }, 
+          });
+
+          setTimeout(() => { setBookingStatus('onQueue'); }, 3000); 
+        } else { throw new Error('failed to submit booking'); }
       }
     } catch (error) { 
       console.warn('Error submitting booking:', error);
@@ -137,6 +123,7 @@ export default function ClientHome() {
   //useEffects ============================================================
   useEffect(() => {
     let locationSubscription = null;
+    const { bookingKey, city } = firestoreUserData.bookingDetails;
 
     const startLocationTracking = async () => {
       if (!await requestForegroundPermissions()) { return; }
@@ -159,13 +146,44 @@ export default function ClientHome() {
       );
     }
 
-    startLocationTracking();
-    return () => { locationSubscription && locationSubscription.remove(); }
-  }, []);
+    const queueListener = onValue(ref(realtime, `bookings/${city}/${bookingKey}`), (snapshot) => {
+      const data = snapshot.exists() ? snapshot.val() : null;
+      
+      if (!data) { return }
 
-  useEffect(() => {
-    showNotification('Client Home', 'success');
-  },[])
+      setBookingStatus('onQueue');
+      
+      if (data?.riderInformation) {
+        const { location, city, geoName, header } = data.riderInformation.statusDetails || {};
+        const { vehicleInformation, personalInformation } = data.riderInformation || {};
+
+        setBookingStatus('active');
+        setBookingPoints((prev) => { //update rider location
+          const newPoint = [...prev];
+          newPoint[2] = { ...prev[2], longitude: location.longitude, latitude: location.latitude, geoName: geoName, city: city };
+          return newPoint;
+        });
+        setRiderDetails((prev) => ({ ...prev, vehicleInformation: { ...vehicleInformation }, personalInformation: { ...personalInformation }, header }));
+        //setActions((prev) => ({ ...prev, riderInformationVisible: true }));
+        //setTimeout(() => { showNotification('Rider is on the way, Please wait and check your map', 'nofication', 5000); }, 3000);
+      }
+
+      const { pickupPoint, dropoffPoint } = data.clientInformation;
+      const { price, duration, distance } = data.bookingDetails;
+
+      setBookingPoints((prev) => { //update client location
+        const newPoint = [...prev];
+        newPoint[0] = { ...prev[0], longitude: pickupPoint.longitude, latitude: pickupPoint.latitude, geoName: pickupPoint.geoName, city: pickupPoint.city };
+        newPoint[1] = { ...prev[1], longitude: dropoffPoint.longitude, latitude: dropoffPoint.latitude, geoName: dropoffPoint.geoName, city: dropoffPoint.city };
+        return newPoint;
+      });
+
+      setBookingDetails((prev) => ({ ...prev, price, duration, distance }));
+    })
+
+    startLocationTracking();
+    return () => { locationSubscription && locationSubscription.remove(); queueListener && queueListener(); };
+  }, []);
 
   useEffect(() => { //animation at first render
     if (bookingPoints[3].latitude !== '' && bookingPoints[3].longitude !== '' && !actions.locationAnimated) {
@@ -185,7 +203,11 @@ export default function ClientHome() {
           const sortedBookings = Object.entries(bookings)
             .map(([key, value]) => ({ key, ...value.bookingDetails }))
             .filter((booking) => booking.queueNumber)
-            .sort((a, b) => a.queueNumber - b.queueNumber);
+            .sort((a, b) => {
+              if (a.accountStatus === 'verified' && b.accountStatus !== 'verified') return -1;
+              if (a.accountStatus !== 'verified' && b.accountStatus === 'verified') return 1;
+              return a.queueNumber - b.queueNumber;
+            });
   
           const updates = {};
           let updateNeeded = false;
@@ -199,14 +221,16 @@ export default function ClientHome() {
             }
           });
   
-          if (updateNeeded) { update(ref(realtime), updates).catch((err) => console.error("Error updating queue:", err) ); }
+          if (updateNeeded) {
+            update(ref(realtime), updates).catch((err) => console.error("Error updating queue:", err));
+          }
         }
       });
   
       return () => queueUnsubscribe();
     }
-  }, [bookingStatus]);  
-
+  }, [bookingStatus]);
+  
   //render ================================================================
   if (loading) { //loading screen
     return (
@@ -223,6 +247,50 @@ export default function ClientHome() {
     <View style={globalStyles.container}>
 
       <BookingIndicator bookingStatus={bookingStatus} />
+
+      <TouchableOpacity 
+        style={[globalStyles.bookingInformationButton, { opacity: bookingPoints[2].latitude === '' && bookingPoints[2].longitude === '' ? 0 : 1 }]}
+        disabled={bookingPoints[2].latitude === '' || bookingPoints[2].longitude === ''}
+        onPress={() => setActions((prev) => ({ ...prev, riderInformationVisible: true }))}
+      >
+        <Ionicons style={globalStyles.bookingInformationButtonIcon} name="chevron-back" />
+        <Ionicons style={globalStyles.bookingInformationButtonIcon} name="bicycle"/>
+      </TouchableOpacity>
+
+      <FloatingView 
+        isVisible={actions.riderInformationVisible}
+        onClose={() => setActions((prev) => ({ ...prev, riderInformationVisible: false }))}
+        height={'fit-content'}
+        width={Dimensions.get('window').width - 30}
+      >
+        <View style={globalStyles.floatiingView}>
+          <View style={globalStyles.floatingViewProfileContainer}>
+            <Image style={globalStyles.floatingViewImage} source={require('../assets/images/emptyProfile.png')} />
+            <View style={{flex: 1}}>
+              { Object.entries(riderDetails?.personalInformation ?? {}).map(([key, value], index) => (
+                <View key={index} style={styles.priceDataContainer}>
+                  <Text style={[styles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
+                  <Text style={styles.priceContainerText}>{value.toUpperCase()}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={globalStyles.floatingViewDataContainer}>
+            <Text style={styles.priceContainerText}>VEHICLE INFORMATION</Text>
+            <View style={globalStyles.dividerLine}/>
+            { Object.entries(riderDetails?.vehicleInformation ?? {}).map(([key, value], index) => (
+              key === 'username' || key === 'contactNumber' || key === 'weight' || key === 'imageURL' ? null :
+              <View key={index} style={styles.priceDataContainer}>
+                <Text style={[styles.priceContainerText, { opacity: .5 }]}>{key.toUpperCase()}</Text> 
+                <Text style={styles.priceContainerText}>{value.toUpperCase()}</Text>
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity style={globalStyles.primaryButton} onPress={() => setActions((prev) => ({ ...prev, riderInformationVisible: false }))}>
+            <Text style={globalStyles.primaryButtonText}>CLOSE</Text>
+          </TouchableOpacity>
+        </View>
+      </FloatingView>
       
       <View style={styles.bottomContainer}>
 
@@ -250,7 +318,7 @@ export default function ClientHome() {
           <View style={{ gap: 10}}>
             <View style={[styles.priceContainer, { flexDirection: `column`}]}>
               {Object.entries(bookingDetails).map(([key, value], index) => (
-                <View key={index} style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between'}}>
+                <View key={index} style={[styles.priceDataContainer, { width: '100%'}]}>
                   <Text style={[styles.priceContainerText, { color: rgba(colors.text, 0.5) }]}>{key.toUpperCase()}</Text>
                   <Text style={styles.priceContainerText}>{key === 'price' ? `₱ ${value}` : key === 'distance' ? `${value} km` : `~ ${Math.ceil(value)} min`}</Text>
                 </View>
@@ -265,42 +333,19 @@ export default function ClientHome() {
         </BottomSheet>
 
         <View style={styles.floatingContainerWrapper}>
-          <Animated.View
-            style={[styles.floatingContainer, { transform: [{ translateY: animatedYClamped }] }]}
-            {...panResponder.panHandlers}
-          >
-            <View style={styles.floatingContainerDataContainer}>
-              <TouchableOpacity onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'pickup' }))}>
-                <Text style={styles.bookingPoints} numberOfLines={1}>
-                  <Text style={[styles.bookingPoints, { color: rgba(colors.text, 0.5)}]} numberOfLines={1}>{`From: `}</Text>
-                  {bookingPoints[0].geoName}
-                </Text>
-              </TouchableOpacity>
-              <View style={globalStyles.dividerLine} />
-              <TouchableOpacity onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'dropoff' }))}>
-                <Text style={styles.bookingPoints} numberOfLines={1}>
-                  <Text style={[styles.bookingPoints, { color: rgba(colors.text, 0.5)}]} numberOfLines={1}>{`To: `}</Text>
-                  {bookingPoints[1].geoName}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity style={styles.floatingContainerButton} onPress={() => swapPoints()} disabled={bookingStatus !== 'inactive'}>
-              <Ionicons name="swap-vertical" size={17} color={colors.constantWhite}/>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.toggleCurrentLocationButton, { opacity: bookingPoints[3].geoName ? 1 : 0 }]} 
-              disabled={!bookingPoints[3].geoName}
-              onPress={() => { mapRef.current?.animateToRegion({ latitude: bookingPoints[3].latitude, longitude: bookingPoints[3].longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }}
-            >
-              <Ionicons name="locate" size={17} color={colors.constantWhite}/>
-            </TouchableOpacity>
-          </Animated.View>
+          <PanLocations 
+            bookingPoints={bookingPoints}
+            setBookingPoints={setBookingPoints}
+            mapRef={mapRef}
+            setActions={setActions}
+            bookingStatus={bookingStatus}
+          />
         </View>
 
         <View style={styles.bottomControls}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceContainerText}>PRICE</Text>
-            <View style={styles.priceContainerDataContainer}>
+            <View style={styles.priceDataContainer}>
               <Text style={styles.priceContainerText}>{`₱ ${bookingDetails.price}`}</Text>
               <Ionicons style={styles.priceContainerIcon} name="information-circle-outline" onPress={() => setActions((prev) => ({ ...prev, fareDetailsVisible: true }))}/>
             </View>
@@ -318,7 +363,9 @@ export default function ClientHome() {
       <Mapview 
         mapRef={mapRef}
         points={bookingPoints}
+        bookingDetails={bookingDetails}
         setBookingDetails={setBookingDetails}
+        header={riderDetails?.header}
       />
 
     </View>
@@ -327,60 +374,14 @@ export default function ClientHome() {
 
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
   floatingContainerWrapper: {
-    height: 195,
+    height: 190,
     position: 'absolute',
-    top: -195,
+    top: -190,
     width: '100%',
     overflow: 'hidden', 
     alignSelf: 'center',
     zIndex: -1, 
     paddingHorizontal: 15,
-  },
-  floatingContainer: {
-    flexDirection: 'row',
-    height: 125,
-    width: '100%',
-    backgroundColor: colors.form,
-    alignSelf: 'center',
-    paddingHorizontal: 25,
-    paddingVertical: 10,
-    borderRadius: 12,
-    shadowColor: colors.tertiary,
-    elevation: 5, 
-    marginBottom: 10
-  },
-  floatingContainerDataContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'left',
-    gap: 1.5
-  },
-  toggleCurrentLocationButton: {
-    position: 'absolute',
-    left: 0,
-    top: -55, 
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  bookingPoints: {
-    height: 45,
-    fontFamily: fonts.Righteous,
-    fontSize: 15,
-    color: colors.text,
-    textAlign: 'left',
-    textAlignVertical: 'center',
-    letterSpacing: 0.5,
-  },
-  floatingContainerButton: {
-    alignSelf: 'center',
-    backgroundColor: colors.primary,
-    padding: 5,
-    borderRadius: 12,
   },
   bottomContainer: {
     backgroundColor: colors.background,
@@ -413,7 +414,7 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
     backgroundColor: colors.form,
     borderRadius: 12,
   },
-  priceContainerDataContainer: {
+  priceDataContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
