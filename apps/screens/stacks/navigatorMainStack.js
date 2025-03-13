@@ -1,4 +1,5 @@
 //context providers
+import firebase from 'firebase/compat/app'
 import { useControls } from '../../providers/controls'
 //screen navigators
 import Suspended from '../scrSuspended'
@@ -15,10 +16,12 @@ const Stack = createNativeStackNavigator() //initiate stack
 export default function navigatorMainStack() {
   const { localControls, firestoreUserData } = useControls();
   const { loggedIn } = localControls;
+  console.log(Object.entries(firestoreUserData.accountDetails?.suspensionDate));
+  
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      { firestoreUserData.accountDetails?.suspensionDate?.length > 0
+      { Object.entries(firestoreUserData.accountDetails?.suspensionDate).length > 0
         ? <Stack.Screen name="SuspendedScreen" component={Suspended} />
         : loggedIn
           ? <Stack.Screen name="HomeStack" component={HomeStack} />
