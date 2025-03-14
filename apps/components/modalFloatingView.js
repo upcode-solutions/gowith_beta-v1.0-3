@@ -20,7 +20,7 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
                 animationIn={'zoomIn'}
                 animationOut={'zoomOut'}
             >
-                <View style={{ height: height, width: width, borderRadius: 12, overflow: 'hidden', shadowColor: '#000', elevation: 5 }}>
+                <View style={{ height: height, width: width, borderRadius: 12, overflow: 'hidden', shadowColor: '#000', elevation: 12 }}>
                     {children}
                 </View>
             </Modal>

@@ -39,17 +39,17 @@ export default function PanLocations({ bookingPoints, setBookingPoints, mapRef, 
     ).current;
 
     //functions =============================================================
-    const swapPoints = () => { //swap pickup and dropoff
-        setBookingPoints((prev) => { //swap points
+    const swapPoints = () => {
+        setBookingPoints((prev) => {
           const newPoints = [...prev];
-          const tempPoints = { latitude: newPoints[0].latitude, longitude: newPoints[0].longitude, geoName: newPoints[0].geoName };
-          newPoints[0] = { ...newPoints[0], latitude: newPoints[1].latitude, longitude: newPoints[1].longitude, geoName: newPoints[1].geoName };
-          newPoints[1] = { ...newPoints[1], latitude: tempPoints.latitude, longitude: tempPoints.longitude, geoName: tempPoints.geoName };
+          const tempPoints = { latitude: newPoints[0].latitude, longitude: newPoints[0].longitude, geoName: newPoints[0].geoName, city: newPoints[0].city };
+          newPoints[0] = { ...newPoints[0], latitude: newPoints[1].latitude, longitude: newPoints[1].longitude, city: newPoints[1].city, geoName: newPoints[1].geoName };
+          newPoints[1] = { ...newPoints[1], latitude: tempPoints.latitude, longitude: tempPoints.longitude, city: tempPoints.city, geoName: tempPoints.geoName };
           return newPoints;
         });
-    
+      
         mapRef.current.fitToCoordinates([bookingPoints[0], bookingPoints[1]], { edgePadding: { top: 100, right: 100, bottom: 150, left: 100 }, animated: true });
-      }
+      };
 
   return (
     <Animated.View
@@ -57,14 +57,20 @@ export default function PanLocations({ bookingPoints, setBookingPoints, mapRef, 
         {...panResponder.panHandlers}
     >
         <View style={styles.floatingDataContainer}>
-            <TouchableOpacity onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'pickup' }))}>
+            <TouchableOpacity 
+                onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'pickup' }))}
+                disabled={bookingStatus !== 'inactive'}
+            >
                 <Text style={styles.bookingPoints} numberOfLines={1}>
                     <Text style={[styles.bookingPoints, { color: rgba(colors.text, 0.5)}]} numberOfLines={1}>{`From: `}</Text>
                     {bookingPoints[0].geoName}
                 </Text>
             </TouchableOpacity>
             <View style={globalStyles.dividerLine} />
-            <TouchableOpacity onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'dropoff' }))}>
+            <TouchableOpacity 
+                onPress={() => setActions((prev) => ({ ...prev, locationInputVisible: true, onFocus: 'dropoff' }))}
+                disabled={bookingStatus !== 'inactive'}
+            >
                 <Text style={styles.bookingPoints} numberOfLines={1}>
                     <Text style={[styles.bookingPoints, { color: rgba(colors.text, 0.5)}]} numberOfLines={1}>{`To: `}</Text>
                     {bookingPoints[1].geoName}

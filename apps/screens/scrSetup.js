@@ -178,7 +178,7 @@ export default function Setup({ route, navigation }) {
             accountStatus: 'unverified',
             dateCreated: serverTimestamp(),
             suspensionDate: ``,
-            suspensionDuration: ``,
+            suspensionDuration: 0,
             suspensionReason: ``,
             suspensionAmount: 0,
             deviceId: Device.deviceName,

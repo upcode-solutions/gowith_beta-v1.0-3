@@ -88,13 +88,15 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     },
     primaryHollowButton: {
         width: '100%',
-        height: textBox.height / 2 ,
+        height: textBox.height,
         borderRadius: borderRadius.sm,
-        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
         borderColor: colors.primary,  
     },
     primaryHollowButtonText: {
-        fontFamily: fonts.RubikRegular,
+        fontFamily: fonts.RubikSemiBold,
         fontSize: fontSize.md,
         color: colors.primary,
         alignSelf: 'center',

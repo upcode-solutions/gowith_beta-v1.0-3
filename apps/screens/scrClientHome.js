@@ -33,14 +33,13 @@ export default function ClientHome() {
   //local variables =======================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
-    { longitude: '', latitude: '', geoName: 'Makati', city: '', type: 'pickup' },
-    { longitude: '', latitude: '', geoName: 'Instramuros', city: '', type: 'dropoff' },
+    { longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' },
+    { longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
   const [riderDetails, setRiderDetails] = useState({});
   const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', });
-  console.log(bookingDetails);
   const [actions, setActions] = useState({ loading: true, locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, riderInformationVisible: false, onFocus: '' });
   
   //references ============================================================
