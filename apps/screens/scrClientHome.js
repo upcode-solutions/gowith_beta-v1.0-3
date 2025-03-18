@@ -96,8 +96,8 @@ export default function ClientHome() {
   
         if (queueNumber && queueNumber > 0) {
           await set(ref(realtime, `bookings/${bookingPoints[0].city}/${key}`), {
-            bookingDetails:{ bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration, accountStatus: accountStatus },
-            clientInformation:{ username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1]},
+            bookingDetails:{ bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration},
+            clientInformation:{accountStatus: accountStatus, username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1]},
           });
     
           await updateDoc(doc(firestore, localData.userType, localData.uid), { 

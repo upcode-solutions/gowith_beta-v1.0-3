@@ -12,8 +12,8 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         flex: 1,
     },
     imageBackground: {
-        width: '100%',
-        height: '100%',
+        height: height,
+        width: width
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,

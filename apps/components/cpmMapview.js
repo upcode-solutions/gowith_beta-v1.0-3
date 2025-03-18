@@ -26,45 +26,53 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
 
     const fetchRoute = async (from, to) => {
         try {
-            const { routes } = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`)).json();
+            const { routes } = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`)).json();
             if (!routes?.length) return;
             const routeCoordinates = routes[0].geometry.coordinates.map(([lon, lat]) => ({ latitude: lat, longitude: lon }));
 
             setRoute(routeCoordinates);
 
-            if ( from.geoName !== '' && to.geoName !== '') {
-                mapRef.current.fitToCoordinates(routeCoordinates, { edgePadding: { top: 50, right: 50, bottom: 250, left: 50 }, animated: true });
-            }
+            const steps = routes[0].legs[0].steps;
+            steps.forEach((step, index) => {
+                const distanceKm = (step.distance / 1000).toFixed(2);
+                const instruction = step.maneuver.instruction || `${step.maneuver.type} ${step.maneuver.modifier || ''}`;
+                const street = step.name || "an unnamed road";
+                console.log(`In ${distanceKm} km, ${instruction.trim()} on ${street}`);
+            });
 
             if (isNearby(from, to)) {
                 setBookingDetails((prev) => ({ ...prev, distance: 0, price: 0, duration: 0 }));
                 return;
-            }else if (localData?.userType === 'clients') {
-                if(bookingDetails.distance > 0 && bookingDetails.price > 0 && bookingDetails.duration > 0) return;
-                const distance = (routes[0].distance / 1000).toFixed(2);
-                const price = distance <= 2 ? firestoreTransactionFee.minimumDistance : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
-                const duration = (routes[0].duration / 60).toFixed(2);
-                setBookingDetails((prev) => ({ ...prev, distance, price, duration }));
+            }
+            
+            if (localData?.userType === 'clients') {
+                const distance = parseFloat((routes[0].distance / 1000).toFixed(2));
+                const duration = parseFloat((routes[0].duration / 60).toFixed(2));
+                const price = distance <= 2 
+                    ? firestoreTransactionFee.minimumDistance 
+                    : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
+    
+                setBookingDetails({ distance, price, duration });
             }
         }catch(e) { console.warn("Error fetching route:", e); }
     }
 
     //useEffects ================================================================
     useEffect(() => {
-        if (points[2].latitude && points[2].longitude) {
-            fetchRoute(points[2], points[0]);
-        }else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
-            fetchRoute(points[0], points[1]);
-        }
-
-        if (points[0].latitude && points[0].longitude && points[2].latitude && points[2].longitude) {
-            mapRef.current.fitToCoordinates([points[0], points[2]], { edgePadding: { top: 50, right: 50, bottom: 250, left: 50 }, animated: true });
-        } else if (points[0].latitude && points[0].longitude && !points[1].latitude && !points[1].longitude) {
-            mapRef.current.animateCamera({ center: { latitude: points[0].latitude, longitude: points[0].longitude } });
-        } else if (points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) {
-            mapRef.current.fitToCoordinates([points[0], points[1]], { edgePadding: { top: 50, right: 50, bottom: 250, left: 50 }, animated: true });
-        }
+        setRoute([]);
+        if (points[2].latitude && points[2].longitude) { fetchRoute(points[2], points[0]); }
+        else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) { fetchRoute(points[0], points[1]); } 
     },[points])
+
+    useEffect(() => {
+        mapRef.current.animateCamera({ 
+            center: { latitude: points[2].latitude, longitude: points[2].longitude }, 
+            pitch: 50, 
+            heading: heading, 
+            zoom: 50,
+            padding: { top: 60, right: 100, bottom: 20, left: 100 },
+        }, { duration: 1000 });
+    },[heading, points, points[2].latitude, points[2].longitude, route])
     
     //render ====================================================================
     return (
@@ -78,6 +86,8 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                 longitudeDelta: 0.0421,
             }}
             mapPadding={{ top: 60, right: 0, bottom: 0, left: 5 }}
+            minZoomLevel={12}
+            maxZoomLevel={20}
         >
             { points && points.map((point, index) => (
                 point.latitude && point.longitude ? (
@@ -121,7 +131,7 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
 
 
             { route && route.length ?
-                <Polyline coordinates={route} strokeWidth={5} strokeColor={colors.tertiary} />
+                <Polyline coordinates={route} strokeWidth={7.5} strokeColor={colors.tertiary} />
                 : null
             }
         </MapView>

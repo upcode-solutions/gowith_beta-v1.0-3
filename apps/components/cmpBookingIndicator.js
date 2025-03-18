@@ -2,9 +2,10 @@
 import { useThemes } from '../providers/themes';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 //react native hooks
 import React from 'react'
-import { StyleSheet, View, Text } from 'react-native'
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 
 export default function BookingIndicator({ bookingStatus }) {
 
@@ -31,8 +32,13 @@ export default function BookingIndicator({ bookingStatus }) {
 
   return (
     <View style={styles.container}>
-        <Ionicons name="ellipse" size={15} color={bookingStatusHandler().color} />
-        <Text style={[styles.text, { color: bookingStatusHandler().color }]}>{bookingStatusHandler().status.toUpperCase()}</Text>
+        <TouchableOpacity style={styles.sosButton} onPress={() => {}}>
+            <MaterialIcons name="sos" size={24} color={colors.form} />
+        </TouchableOpacity>
+        <View style={styles.indicatorContainer}>
+            <Ionicons name="ellipse" size={15} color={bookingStatusHandler().color} />
+            <Text style={[styles.text, { color: bookingStatusHandler().color }]}>{bookingStatusHandler().status.toUpperCase()}</Text>
+        </View>
     </View>
   )
 }
@@ -40,22 +46,36 @@ export default function BookingIndicator({ bookingStatus }) {
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: colors.form,
         position: 'absolute',
-        right: 0,
-        top: 0,
+        right: 15,
+        top: 15,
+        gap: 15,
+        zIndex: 1
+    },
+    sosButton: {
+        height: 45,
+        width: 45,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        width: 'fit-content',
-        height: 45,
-        borderRadius: 25,
-        marginTop: 15,
-        marginRight: 15,
-        paddingHorizontal: 15,
-        gap: 10,
-        zIndex: 1,
-        shadowColor: colors.shadowColor,
+        backgroundColor: colors.errorRedBackground,
+        justifyContent: 'center',
+        shadowColor: colors.shadowGray,
         elevation: 5
+    },
+    indicatorContainer: {
+        height: 45,
+        width: 'fit-content',
+        flexDirection: 'row',
+        backgroundColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingRight: 17.5,
+        borderRadius: 50,
+        shadowColor: colors.shadowGray,
+        elevation: 5,
+        gap: 5
     },
     text: {
         fontFamily: fonts.Righteous,

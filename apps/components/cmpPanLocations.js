@@ -20,7 +20,7 @@ export default function PanLocations({ bookingPoints, setBookingPoints, mapRef, 
 
     const panResponder = useRef(
         PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2, // Detect small drags
+        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 3, // Detect small drags
         onPanResponderGrant: () => { // On drag start
             animatedY.setOffset(animatedY.__getValue());
             animatedY.setValue(0);
@@ -87,14 +87,14 @@ export default function PanLocations({ bookingPoints, setBookingPoints, mapRef, 
         >
             <Ionicons name="locate" size={17} color={colors.constantWhite}/>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.toggleRiderLocationButton, { opacity: bookingPoints[2].geoName ? 1 : 0 }]} 
             disabled={!bookingPoints[2].geoName}
             onPress={() => { mapRef.current?.animateToRegion({ latitude: bookingPoints[2].latitude, longitude: bookingPoints[2].longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }}
         >
             <Ionicons name="bicycle" size={17} color={colors.constantWhite}/>
         </TouchableOpacity>
-        </Animated.View>
+    </Animated.View>
   )
 }
 
@@ -111,14 +111,14 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
         shadowColor: colors.tertiary,
         elevation: 5, 
         marginBottom: 10
-      },
-      floatingDataContainer: {
+    },
+    floatingDataContainer: {
         flex: 1,
         justifyContent: 'space-between',
         alignItems: 'left',
         gap: 1.5
-      },
-      bookingPoints: {
+    },
+    bookingPoints: {
         height: 45,
         fontFamily: fonts.Righteous,
         fontSize: 15,
@@ -126,14 +126,14 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
         textAlign: 'left',
         textAlignVertical: 'center',
         letterSpacing: 0.5,
-      },
-      floatingContainerButton: {
+    },
+    floatingContainerButton: {
         alignSelf: 'center',
         backgroundColor: colors.primary,
         padding: 5,
         borderRadius: 12,
-      },
-      toggleCurrentLocationButton: {
+    },
+    toggleCurrentLocationButton: {
         position: 'absolute',
         left: 0,
         top: -55, 
@@ -144,8 +144,8 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,
-      },
-      toggleRiderLocationButton: {
+    },
+    toggleRiderLocationButton: {
         position: 'absolute',
         left: 55,
         top: -55, 
@@ -156,5 +156,5 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,
-      },
+    },
 })
