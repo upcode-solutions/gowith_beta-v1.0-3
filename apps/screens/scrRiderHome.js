@@ -35,7 +35,7 @@ export default function RiderHome() {
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
-  const [riderDetails, setRiderDetails] = useState({ heading: 0, tiltStatus: null });
+  const [riderDetails, setRiderDetails] = useState({ heading: 0, tiltStatus: null, passengerOnBoard: false });
   const [bookingDetails, setBookingDetails] = useState({ queueNumber: 0, clientDetails: {}, bookingDetails: {}, steps: {} });
   const [actions, setActions] = useState({ loading: true, autoAccept: false, locationAnimated: false, tiltWarningVisible: false, clientInformationVisible: false });
 
@@ -49,27 +49,31 @@ export default function RiderHome() {
   //functions ==============================================================
   const requestForegroundPermissions = async () => (await Location.requestForegroundPermissionsAsync()).status === 'granted';
 
-  const tiltHandler = ({ x, y, z }) => { //accelerometer: tild Identifier (critical or nominal)
-    let currentStatus = '';
-
-    if (x < 0.5 && x > -0.5 && z < .9 && z > -0.25) { currentStatus = 'nominal'; } 
-    else { currentStatus = 'critical'; }
-
-    if ( currentStatus === 'critical' ) {
-      setRiderDetails((prev) => ({ ...prev, tiltStatus: 'critical' }));
-      if(!warningTimeout.current && !actions.tiltWarningVisible) { 
-        setActions((prev) => ({ ...prev, tiltWarningVisible: true }));
+  const tiltHandler = ({ x, y, z }) => {
+    let currentStatus = riderDetails.tiltStatus;
+  
+    // Introduce a small tolerance to prevent rapid switching
+    if (x < 0.5 && x > -0.5 && z < 0.9 && z > -0.25) {
+      if (currentStatus !== 'nominal') {
+        setRiderDetails((prev) => ({ ...prev, tiltStatus: 'nominal' }));
+        if (warningTimeout.current) {
+          clearTimeout(warningTimeout.current);
+          warningTimeout.current = null;
+        }
+        setActions((prev) => ({ ...prev, tiltWarningVisible: false }));
       }
     } else {
-      if(warningTimeout.current) { 
-        clearTimeout(warningTimeout.current); 
-        warningTimeout.current = null;
+      if (currentStatus !== 'critical') {
+        setRiderDetails((prev) => ({ ...prev, tiltStatus: 'critical' }));
+        if (!warningTimeout.current && !actions.tiltWarningVisible) {
+          warningTimeout.current = setTimeout(() => {
+            setActions((prev) => ({ ...prev, tiltWarningVisible: true }));
+          }, 15000);
+        }
       }
-      setRiderDetails((prev) => ({ ...prev, tiltStatus: 'nominal' }));
-      setActions((prev) => ({ ...prev, tiltWarningVisible: false }));
     }
-  }
-
+  };
+  
   const bookingHandler = async() => { //rider queue handler, active or inactive
     const { username, firstName, lastName } = firestoreUserData.personalInformation;
 
@@ -123,7 +127,12 @@ export default function RiderHome() {
       setBookingStatus('inactive');
       console.warn("scrRiderHome - bookingHandler", error);
     }
-  }
+  };
+
+  const accidentHandler = async() => { //accident handler
+    console.log('SOS activated');
+  };
+    
 
   //useEffects =============================================================
   useEffect(() => { //map animation after rider is locatied
@@ -157,7 +166,7 @@ export default function RiderHome() {
             return newPoint;
           });
 
-          if(bookingStatus === 'active') {
+          if(bookingStatus === 'active' && city) {
             const { bookingKey, key } = firestoreUserData.bookingDetails;
             await update(ref(realtime, `bookings/${bookingPoints[2].city}/${bookingKey}/riderInformation/riderStatus`), { 
               location: { latitude, longitude },
@@ -166,7 +175,10 @@ export default function RiderHome() {
           } else if(bookingStatus === 'onQueue') {
             try {
               if(currentCity[0].city === bookingPoints[2].city && bookingStatus === 'onQueue') {
-                await update(ref(realtime, `riders/${bookingPoints[2].city}/${username}/riderStatus`), { location: { latitude, longitude }, })
+                await update(ref(realtime, `riders/${bookingPoints[2].city}/${username}/riderStatus`), { 
+                  location: { latitude, longitude },
+                  tiltStatus: riderDetails.tiltStatus, // Ensure this is always included
+                });
               } else {
                 const riderSnapshot = await get(ref(realtime, `riders`));
   
@@ -181,9 +193,9 @@ export default function RiderHome() {
                 await set(ref(realtime, `riders/${currentCity[0].city}/${username}`), {
                   personalInformation: { username, firstName, lastName },
                   vehicleInformation: { plateNumber, vehicleColor, vehicleModel },
-                  riderStatus: { location: { latitude, longitude }, heading, tiltStatus, city: currentCity[0].city, timestamp: new Date().getTime(), queueNumber: cityQueueData },
+                  riderStatus: { location: { latitude, longitude }, heading, tiltStatus, city: currentCity[0].city, timestamp: new Date().getTime(), queueNumber: cityQueueData }
                 });
-  
+                
                 setBookingPoints((prev) => { //update client location
                   const newPoint = [...prev];
                   newPoint[2] = { ...prev[2], city: currentCity[0].city };
@@ -205,7 +217,12 @@ export default function RiderHome() {
 
     const headerTiltHandler = async() => { //tilt and heading handler for security
       //heading listener
-      const headingListener = await Location.watchHeadingAsync((headingData) => { setRiderDetails({ ...riderDetails, heading: headingData.trueHeading }); });
+      const headingListener = await Location.watchHeadingAsync((headingData) => {
+        setRiderDetails((prev) => {
+          if (Math.abs(headingData.trueHeading - prev.heading) > 10) { return { ...prev, heading: headingData.trueHeading };}
+          return prev;
+        });
+      });
       //tilt listener
       Accelerometer.setUpdateInterval(1000);
       const tiltListener = Accelerometer.addListener(tiltHandler)
@@ -345,15 +362,15 @@ export default function RiderHome() {
         let updateNeeded = false;
         const updates = {};
 
-        switch (true) {
-          case Math.abs(data.riderStatus.heading - riderDetails.heading) > 50:
+        if (data.riderStatus) {
+          if (Math.abs(data.riderStatus.heading - riderDetails.heading) > 30) {
             updates[`riderStatus/heading`] = riderDetails.heading;
             updateNeeded = true;
-            break;
-          case data.riderStatus.tiltStatus !== riderDetails.tiltStatus:
+          }
+          if (data.riderStatus.tiltStatus !== riderDetails.tiltStatus) {
             updates[`riderStatus/tiltStatus`] = riderDetails.tiltStatus;
             updateNeeded = true;
-            break;
+          }
         }
 
         if (updateNeeded) { await update(ref(realtime, path), updates); }
@@ -365,14 +382,7 @@ export default function RiderHome() {
 
   //render =================================================================
   if (actions.loading) { //loading screen
-    return (
-      <Loading 
-        loadingBackgroundColor={colors.background} 
-        loadingMessage={'Preparing Map...'} 
-        ActivityIndicatorColor={colors.primary}
-        textColor={colors.primary}
-      />
-    ); 
+    return <Loading loadingBackgroundColor={colors.background} loadingMessage={'Preparing Map...'} ActivityIndicatorColor={colors.primary}textColor={colors.primary}/>
   }
 
   return (
@@ -404,9 +414,14 @@ export default function RiderHome() {
         mapRef={mapRef}
       />
 
-      <AccidentPopup actions={actions} setActions={setActions}/>
+      <AccidentPopup 
+        actions={actions} 
+        setActions={setActions} 
+        warningTimeout={warningTimeout} 
+        accidentHandler={accidentHandler}
+      />
       
-      <BookingIndicator bookingStatus={bookingStatus} />
+      <BookingIndicator bookingStatus={bookingStatus} accidentHandler={accidentHandler}/>
       
       <Mapview 
         mapRef={mapRef}

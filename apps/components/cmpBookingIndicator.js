@@ -8,7 +8,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react'
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 
-export default function BookingIndicator({ bookingStatus }) {
+export default function BookingIndicator({ bookingStatus, accidentHandler }) {
 
     //context providers
     const { localData } = useControls();
@@ -35,7 +35,7 @@ export default function BookingIndicator({ bookingStatus }) {
   return (
     <View style={styles.container}>
         { localData && localData.userType === 'riders' &&
-            <TouchableOpacity style={styles.sosButton} onPress={() => {}}>
+            <TouchableOpacity style={styles.sosButton} onPress={() => accidentHandler()}>
                 <MaterialIcons name="sos" size={24} color={colors.form} />
             </TouchableOpacity>
         }

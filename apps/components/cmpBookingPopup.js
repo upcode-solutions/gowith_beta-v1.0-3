@@ -75,6 +75,10 @@ export default function BookingPopup({
       const snapshotRider = await get(ref(realtime, `riders/${bookingPoints[2].city}/${firestoreUserData.personalInformation.username}`));
       if (!snapshotRider.exists()) { return; }
       const riderData = snapshotRider.val();
+
+      if (riderData.riderStatus && riderData.riderStatus.queueNumber) { //might become an error
+        delete riderData.riderStatus.queueNumber;
+      }
       
       await update(ref(realtime, `bookings/${bookingPoints[2].city}/${bookingKey}`), { 
         'bookingDetails/queueNumber': 0,

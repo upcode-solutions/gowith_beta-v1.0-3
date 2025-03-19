@@ -13,8 +13,9 @@ const Stack = createNativeStackNavigator() //initiate stack
 export default function HomeStack() {
 
   //context variables
-  const { localData } = useControls();  
-
+  const { localData, firestoreUserData } = useControls();  
+  console.log(firestoreUserData.accountDetails.accidentOccured);
+  
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {localData.userType === 'clients'

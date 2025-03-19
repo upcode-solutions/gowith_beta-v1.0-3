@@ -4,6 +4,7 @@ import { useGlobalStyles } from '../providers/styles';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+import { LinearGradient } from 'expo-linear-gradient';
 //react native components
 import React, { useEffect, useRef, useMemo } from 'react'
 import {Animated, Easing, Image, PanResponder, StyleSheet, Text, TouchableOpacity, Switch, View } from 'react-native'
@@ -16,7 +17,7 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
     const styles = createStyles(fonts, colors, rgba);
     //references
     const animatedY = useRef(new Animated.Value(0)).current; // Start collapsed
-    const animatedYClamped = animatedY.interpolate({ inputRange: [55, 160], outputRange: [160, 55], extrapolate: 'clamp', });
+    const animatedYClamped = animatedY.interpolate({ inputRange: [55, 125], outputRange: [125, 55], extrapolate: 'clamp', });
 
     //functions
     const panResponder = useMemo(() => {
@@ -34,7 +35,7 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
         onPanResponderRelease: (_, gesture) => {
           animatedY.flattenOffset();
           const shouldExpand = gesture.dy < -50 || gesture.vy < -0.5;
-          Animated.timing(animatedY, { toValue: shouldExpand ? 160 : 55, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start();
+          Animated.timing(animatedY, { toValue: shouldExpand ? 125 : 55, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start();
         }
       });
     }, [bookingStatus]); // Recalculate when bookingStatus changes
@@ -50,13 +51,13 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
     };
 
     //useEffect
-    useEffect(() => {
+    useEffect(() => { 
       if (Object.entries(bookingDetails?.steps).length) { Animated.timing(animatedY, { toValue: 160, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start(); }
       else { Animated.timing(animatedY, { toValue: 55, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start(); }
     
       const speak = () => {
         const { instruction, distanceKm, street } = bookingDetails.steps;
-        const phrase = `In ${distanceKm} Km, ${instruction} at ${street}`;
+        const phrase = `In ${distanceKm} km, ${instruction} at ${street}`;
         Speech.speak(phrase, {
           language: 'fil-PH',
           pitch: 1.1,
@@ -80,11 +81,19 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
           >
 
             <View style={styles.directionContainer}>
-              <Image style={styles.directionImage} source={imageDirectionHandler(bookingDetails?.steps?.instruction)} />
-              <View style={styles.directionInstructions}>
-                <Text style={[styles.directionInstructionsText, { fontSize: 20 }]}>{`${bookingDetails?.steps?.instruction?.toUpperCase() || ''} ( ${bookingDetails?.steps?.distanceKm || 0} Km )`}</Text>
-                <Text style={[styles.directionInstructionsText, { fontSize: 17.5 }]}>{`${bookingDetails?.steps?.street || 'an unnamed road'}`}</Text>
-              </View>
+              <LinearGradient
+                colors={[rgba(colors.primary, 0.20), rgba(colors.form, 0.25)]}
+                style={styles.linearGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                pointerEvents='none'
+              >
+                <Image style={styles.directionImage} source={imageDirectionHandler(bookingDetails?.steps?.instruction)} />
+                <View style={styles.directionInstructions}>
+                  <Text style={[styles.directionInstructionsText, { fontSize: 20 }]}>{`${bookingDetails?.steps?.instruction?.toUpperCase() || ''} ( ${bookingDetails?.steps?.distanceKm || 0} km )`}</Text>
+                  <Text style={[styles.directionInstructionsText, { fontSize: 17.5 }]}>{`${bookingDetails?.steps?.street || 'an unnamed road'}`}</Text>
+                </View>
+              </LinearGradient>
             </View>
 
             <TouchableOpacity 
@@ -99,16 +108,26 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
         </View>
 
         <View style={globalStyles.bottomControls}>
+            { bookingStatus !== 'active' ? 
             <View style={globalStyles.priceContainer}>
-            <Text style={globalStyles.priceContainerText}>AUTO ACCEPT BOOKING</Text>
-            <Switch
-              style={styles.switch}
-              value={actions.autoAccept}
-              onValueChange={(value) => { setActions((prev) => ({ ...prev, autoAccept: value })); }}
-              thumbColor={colors.tertiary}
-              trackColor={{ false: rgba(colors.tertiary, 0.5), true: colors.primary }}
-            />
+              <Text style={globalStyles.priceContainerText}>AUTO ACCEPT BOOKING</Text>
+              <Switch
+                style={styles.switch}
+                value={actions.autoAccept}
+                onValueChange={(value) => { setActions((prev) => ({ ...prev, autoAccept: value })); }}
+                thumbColor={colors.tertiary}
+                trackColor={{ false: rgba(colors.tertiary, 0.5), true: colors.primary }}
+              />
+            </View> : 
+            <View style={[globalStyles.buttonContainer, { flexDirection: 'row' }]}>
+              <TouchableOpacity style={[globalStyles.primaryHollowButton, { flex: 1 }]} onPress={() => clientPickupHandler()}>
+                <Text style={globalStyles.primaryHollowButtonText}>Client Pickup</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[globalStyles.primaryButton, { flex: .35 }]} onPress={() => callHandler()}>
+                <Ionicons name="send" size={22} color={colors.constantWhite} />
+              </TouchableOpacity>
             </View>
+            }
             <TouchableOpacity 
               style={[globalStyles.primaryButton, { opacity: bookingStatus === 'pending' ? 0.5 : 1 }]} 
               onPress={() => bookingHandler()}
@@ -123,9 +142,9 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
 
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
   floatingContainerWrapper: {
-    height: 185,
+    height: 140,
     position: 'absolute',
-    top: -180,
+    top: -140,
     width: '100%',
     overflow: 'hidden', 
     alignSelf: 'center',
@@ -134,12 +153,10 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
   },
   floatingContainer: {
     flexDirection: 'row',
-    height: 115,
+    height: 75,
     width: '100%',
     backgroundColor: colors.form,
     alignSelf: 'center',
-    paddingHorizontal: 25,
-    paddingVertical: 10,
     borderRadius: 12,
     shadowColor: 'black',
     elevation: 10, 
@@ -147,21 +164,26 @@ const createStyles = (fonts, colors, rgba) => StyleSheet.create({
   },
   directionContainer: {
     flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  linearGradient: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'left',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
     gap: 20
   },
   directionImage: {
-    width: 50,
+    width: 45,
     height: '100%',
     resizeMode: 'contain',
   },
   directionInstructions: {
     flex: 1,
-    flexDirection: 'column',
     alignItems: 'left',
     justifyContent: 'center',
-    gap: 1.5
   },
   directionInstructionsText: {
     fontFamily: fonts.Righteous,
