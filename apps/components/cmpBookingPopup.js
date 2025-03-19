@@ -121,7 +121,7 @@ export default function BookingPopup({
       onClose={() => {}}
       backdropOpacity={.15}
       height={'fit-content'}
-      width={Dimensions.get('window').width * .9}
+      width={Dimensions.get('window').width * .75}
     >
       <View style={styles.container}>
         <View style={styles.clientContainer}>

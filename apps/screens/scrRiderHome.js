@@ -8,6 +8,7 @@ import Mapview from '../components/cpmMapview';
 import BookingIndicator from '../components/cmpBookingIndicator';
 import BookingPopup from '../components/cmpBookingPopup';
 import BottomControls from '../components/cmpBottomControls';
+import AccidentPopup from '../components/cmpAccidentPopup';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -18,16 +19,14 @@ import { set, ref, remove, push, get, onValue, update } from 'firebase/database'
 import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
 //react native components
 import React, { useState, useEffect, useRef } from 'react'
-import { Alert, Dimensions, Image, Linking, StyleSheet, Switch, Text, TouchableOpacity, View, } from 'react-native'
-import firebase from 'firebase/compat/app';
+import { Alert, Linking, StyleSheet, TouchableOpacity, View, } from 'react-native'
 
 export default function RiderHome() {
   
   //context variables ======================================================
-  const { localControls, localData, firestoreUserData } = useControls();
+  const { localData, firestoreUserData } = useControls();
   const { fonts, colors, rgba } = useThemes();
   const globalStyles = useGlobalStyles( fonts, colors, rgba );
-  const styles = createStyles( fonts, colors, rgba );
   //local variables ========================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
@@ -37,7 +36,7 @@ export default function RiderHome() {
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
   const [riderDetails, setRiderDetails] = useState({ heading: 0, tiltStatus: null });
-  const [bookingDetails, setBookingDetails] = useState({ queueNumber: 0, clientDetails: {}, bookingDetails: {} });
+  const [bookingDetails, setBookingDetails] = useState({ queueNumber: 0, clientDetails: {}, bookingDetails: {}, steps: {} });
   const [actions, setActions] = useState({ loading: true, autoAccept: false, locationAnimated: false, tiltWarningVisible: false, clientInformationVisible: false });
 
   const [bookingCollection, setBookingCollection] = useState([]);
@@ -59,15 +58,7 @@ export default function RiderHome() {
     if ( currentStatus === 'critical' ) {
       setRiderDetails((prev) => ({ ...prev, tiltStatus: 'critical' }));
       if(!warningTimeout.current && !actions.tiltWarningVisible) { 
-        warningTimeout.current = setTimeout(() => {
-          setActions((prev) => ({ ...prev, tiltWarningVisible: true }));
-          Alert.alert( 'Warning', 'You are device is tilting', [{ text:'OK', 
-            onPress: () => { 
-              setActions((prev) => ({ ...prev, tiltWarningVisible: false })); 
-              warningTimeout.current = null; 
-            } 
-          }])
-        }, 15000);
+        setActions((prev) => ({ ...prev, tiltWarningVisible: true }));
       }
     } else {
       if(warningTimeout.current) { 
@@ -137,7 +128,7 @@ export default function RiderHome() {
   //useEffects =============================================================
   useEffect(() => { //map animation after rider is locatied
     if (bookingPoints[2].latitude !== '' && bookingPoints[2].longitude !== '' && !actions.locationAnimated) {
-      setTimeout(() => { mapRef.current?.animateToRegion({ longitude: bookingPoints[2].longitude, latitude: bookingPoints[2].latitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }); }, 2700);
+      setTimeout(() => { mapRef.current.animateCamera({ center: { latitude: bookingPoints[2].latitude, longitude: bookingPoints[2].longitude }, pitch: 50, heading: riderDetails.heading, zoom: 45 }, { duration: 500, }); }, 2800);
       setActions((prev) => ({ ...prev, locationAnimated: true }));
     }
   },[bookingPoints[2]]);
@@ -288,7 +279,6 @@ export default function RiderHome() {
           }));
 
           setTimeout(() => { setBookingStatus('active'); }, 1000);
-
         } else {
           const queueSnapshot = await get(ref(realtime, `riders`));
           if(!queueSnapshot.exists()) { return; }
@@ -309,7 +299,6 @@ export default function RiderHome() {
           }
 
         }
-
       } catch (error) { console.error("Error checking queue:", error); }
     };
 
@@ -344,7 +333,7 @@ export default function RiderHome() {
     if(bookingStatus === 'onQueue' || bookingDetails.queueNumber !== 0 ) { fetchBooking(); }
   }, [bookingStatus, bookingDetails?.queueNumber]);
 
-  useEffect(() => {
+  useEffect(() => { //update rider status
     const updateRiderStatus = async () => {
       try { 
         const { username } = firestoreUserData.personalInformation;
@@ -389,7 +378,7 @@ export default function RiderHome() {
   return (
     <View style={globalStyles.container}>
 
-      <TouchableOpacity 
+      <TouchableOpacity //View Client Information
         style={[globalStyles.bookingInformationButton, { opacity: bookingStatus === 'active' ? 1 : 0 }]}
         disabled={Object.entries(bookingDetails.clientDetails).length === 0}
         onPress={() => setActions((prev) => ({ ...prev, clientInformationVisible: true }))}
@@ -398,7 +387,7 @@ export default function RiderHome() {
         <Ionicons style={globalStyles.bookingInformationButtonIcon} name="location-sharp"/>
       </TouchableOpacity>
 
-      <BookingPopup 
+      <BookingPopup //booking popup
         bookingStatus={bookingStatus} setBookingStatus={setBookingStatus}
         bookingPoints={bookingPoints} setBookingPoints={setBookingPoints}
         bookingCollection={bookingCollection}
@@ -406,13 +395,16 @@ export default function RiderHome() {
         bookingDetails={bookingDetails} setBookingDetails={setBookingDetails}
       />
 
-      <BottomControls 
+      <BottomControls //bottom controls
         actions={actions} setActions={setActions}
         bookingStatus={bookingStatus}
         bookingPoints={bookingPoints}
+        bookingDetails={bookingDetails}
         bookingHandler={bookingHandler}
         mapRef={mapRef}
       />
+
+      <AccidentPopup actions={actions} setActions={setActions}/>
       
       <BookingIndicator bookingStatus={bookingStatus} />
       
@@ -427,7 +419,3 @@ export default function RiderHome() {
     </View>
   )
 }
-
-const createStyles = ( fonts, colors, rgba ) => StyleSheet.create({
-  
-})

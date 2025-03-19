@@ -1,4 +1,5 @@
 //context providers
+import { useControls } from '../providers/controls';
 import { useThemes } from '../providers/themes';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +11,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 export default function BookingIndicator({ bookingStatus }) {
 
     //context providers
+    const { localData } = useControls();
     const { fonts, colors, rgba } = useThemes();
     const styles = createStyles(fonts, colors, rgba);
     
@@ -32,9 +34,11 @@ export default function BookingIndicator({ bookingStatus }) {
 
   return (
     <View style={styles.container}>
-        <TouchableOpacity style={styles.sosButton} onPress={() => {}}>
-            <MaterialIcons name="sos" size={24} color={colors.form} />
-        </TouchableOpacity>
+        { localData && localData.userType === 'riders' &&
+            <TouchableOpacity style={styles.sosButton} onPress={() => {}}>
+                <MaterialIcons name="sos" size={24} color={colors.form} />
+            </TouchableOpacity>
+        }
         <View style={styles.indicatorContainer}>
             <Ionicons name="ellipse" size={15} color={bookingStatusHandler().color} />
             <Text style={[styles.text, { color: bookingStatusHandler().color }]}>{bookingStatusHandler().status.toUpperCase()}</Text>

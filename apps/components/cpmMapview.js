@@ -32,13 +32,19 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
 
             setRoute(routeCoordinates);
 
-            const steps = routes[0].legs[0].steps;
-            steps.forEach((step, index) => {
-                const distanceKm = (step.distance / 1000).toFixed(2);
-                const instruction = step.maneuver.instruction || `${step.maneuver.type} ${step.maneuver.modifier || ''}`;
-                const street = step.name || "an unnamed road";
-                console.log(`In ${distanceKm} km, ${instruction.trim()} on ${street}`);
-            });
+            if(localData?.userType === 'riders') {
+                const steps = routes[0].legs[0].steps.map((step) => ({
+                    distanceKm: (step.distance / 1000).toFixed(2),
+                    instruction: step.maneuver.instruction || `${step.maneuver.type} ${step.maneuver.modifier || ''}`.trim(),
+                    street: step.name || "an unnamed road",
+                })).filter((step) => !step.instruction.includes('depart'));
+
+                const { instruction, street } = bookingDetails?.steps || {};
+                if (instruction !== steps[0].instruction || street !== steps[0].street) {
+                    setBookingDetails((prev) => ({ ...prev, steps: steps[0] }));
+                }   
+            }
+
 
             if (isNearby(from, to)) {
                 setBookingDetails((prev) => ({ ...prev, distance: 0, price: 0, duration: 0 }));
@@ -65,14 +71,15 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
     },[points])
 
     useEffect(() => {
-        mapRef.current.animateCamera({ 
-            center: { latitude: points[2].latitude, longitude: points[2].longitude }, 
-            pitch: 50, 
-            heading: heading, 
-            zoom: 50,
-            padding: { top: 60, right: 100, bottom: 20, left: 100 },
-        }, { duration: 1000 });
-    },[heading, points, points[2].latitude, points[2].longitude, route])
+        if (mapRef.current && points[2].latitude && points[2].longitude) {
+            mapRef.current.animateCamera({
+                center: { latitude: points[2].latitude, longitude: points[2].longitude },
+                pitch: 50, // Tilt angle
+                heading: heading, // Heading direction
+                zoom: 60, // Set your desired zoom level here
+            }, { duration: 500 });
+        }
+    }, [heading, points, points[2].latitude, points[2].longitude]);
     
     //render ====================================================================
     return (
@@ -86,8 +93,9 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                 longitudeDelta: 0.0421,
             }}
             mapPadding={{ top: 60, right: 0, bottom: 0, left: 5 }}
-            minZoomLevel={12}
+            //minZoomLevel={12}
             maxZoomLevel={20}
+            showsBuildings={false}
         >
             { points && points.map((point, index) => (
                 point.latitude && point.longitude ? (

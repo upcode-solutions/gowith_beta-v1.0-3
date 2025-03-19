@@ -2,7 +2,7 @@ const light = {
     background: 'rgb(255, 255, 255)',               // #FFFFFF
     form: 'rgb(240, 240, 250)',                     // #F0F0FA
     text: 'rgb(34, 34, 34)',                        // #222222
-    primary: '#311787',                             // #311787
+    primary: 'rgb(49, 23, 135)',                    // #311787
     secondary: 'rgb(101, 78, 163)',                 // #654EA3
     tertiary: 'rgb(151, 129, 211)',                 // #9781D3
     accent: 'rgb(72, 191, 227)',                    // #48BFE3
