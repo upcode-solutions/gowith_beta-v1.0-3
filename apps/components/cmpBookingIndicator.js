@@ -4,9 +4,10 @@ import { useThemes } from '../providers/themes';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { set } from 'firebase/database';
 //react native hooks
-import React from 'react'
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { StyleSheet, View, Text, TouchableOpacity, ToastAndroid } from 'react-native'
 
 export default function BookingIndicator({ bookingStatus, accidentHandler }) {
 
@@ -14,8 +15,10 @@ export default function BookingIndicator({ bookingStatus, accidentHandler }) {
     const { localData } = useControls();
     const { fonts, colors, rgba } = useThemes();
     const styles = createStyles(fonts, colors, rgba);
+    //local variables
+    const [tapCount, setTapCount] = useState(0);
+    const [lastTapTime, setLastTapTime] = useState(0);
     
-
     //functions
     const bookingStatusHandler = () => {
         let status = '';
@@ -32,10 +35,37 @@ export default function BookingIndicator({ bookingStatus, accidentHandler }) {
         return { status, color };
     }
 
+    
+    const clickAccidentHandler = () => {
+        const now = Date.now();
+        const TAP_TIMEOUT = 2500;
+        const REQUIRED_TAPS = 5;
+    
+        if (now - lastTapTime > TAP_TIMEOUT) {
+            // Reset if timeout exceeded
+            setTapCount(1);
+        } else {
+            const newTapCount = tapCount + 1;
+            setTapCount(newTapCount);
+    
+            if (newTapCount === REQUIRED_TAPS) {
+                accidentHandler();
+                setTapCount(0);
+            }
+        }
+        setLastTapTime(now);
+    }
+    
+
+
   return (
     <View style={styles.container}>
         { localData && localData.userType === 'riders' &&
-            <TouchableOpacity style={styles.sosButton} onPress={() => accidentHandler()}>
+            <TouchableOpacity 
+                style={[styles.sosButton, { opacity: bookingStatus === 'inactive' ? 0.5 : 1 }]} 
+                onPress={() => clickAccidentHandler()}
+                disabled={bookingStatus === 'inactive'}
+            >
                 <MaterialIcons name="sos" size={24} color={colors.form} />
             </TouchableOpacity>
         }

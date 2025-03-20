@@ -76,7 +76,7 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                 center: { latitude: points[2].latitude, longitude: points[2].longitude },
                 pitch: 50, // Tilt angle
                 heading: heading, // Heading direction
-                zoom: 60, // Set your desired zoom level here
+                //zoom: 60, // Set your desired zoom level here
             }, { duration: 500 });
         }
     }, [heading, points, points[2].latitude, points[2].longitude]);

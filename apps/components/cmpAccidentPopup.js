@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons'
 //react native components
 import { StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { set } from 'firebase/database'
 
 export default function AccidentPopup({ actions, setActions, warningTimeout, accidentHandler }) {
 
@@ -23,7 +22,6 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
     const closeWarning = () => {
         setActions((prev) => ({...prev, tiltWarningVisible: false}));
         warningTimeout.current = null; 
-        setCountDown(60);
     };
 
     //useEffects
@@ -32,8 +30,8 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
             if(countDown > 0) {
                 let timer = setTimeout(() => setCountDown((prev) => prev - 1), 1000);
                 return () => clearTimeout(timer);
-            } else { activeSOS(); }
-        }
+            }
+        } else { setTimeout(() => setCountDown(60), 2500); }
     }, [countDown, actions.tiltWarningVisible]);
 
   return (
@@ -49,17 +47,16 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
             <View style={styles.messageContainer}>
                 <Text style={[globalStyles.priceContainerText, styles.warningText]}>
                     Are you okay? Your device has been tilted for a long period of time. SOS protocol will be activated in 
-                    { <Text style={[globalStyles.priceContainerText, styles.warningText, {color: colors.errorRedBackground}]}>{` ${countDown} seconds. `}</Text> } 
-                    Creating a false emergency will result in permanent suspension.
+                    { <Text style={[globalStyles.priceContainerText, styles.warningText, {color: colors.errorRedBackground}]}>{` ${countDown} seconds. `}</Text> }
                 </Text>
                 
             </View>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={[globalStyles.primaryHollowButton, {flex: 1, borderColor: colors.errorRedBackground}]} onPress={() => closeWarning()}>
-                    <Text style={[globalStyles.primaryHollowButtonText, {color: colors.errorRedBackground}]}>No</Text>
+                    <Text style={[globalStyles.primaryHollowButtonText, {color: colors.errorRedBackground}]}>Yes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[globalStyles.primaryButton, {flex: 1, backgroundColor: colors.errorRedBackground}]} onPress={() => accidentHandler()}>
-                    <Text style={globalStyles.primaryButtonText}>Yes</Text>
+                    <Text style={globalStyles.primaryButtonText}>No</Text>
                 </TouchableOpacity>
             </View>
         </View>

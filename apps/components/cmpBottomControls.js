@@ -1,10 +1,14 @@
 //context providers
+import { useControls } from '../providers/controls'
 import { useThemes } from '../providers/themes';
 import { useGlobalStyles } from '../providers/styles';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { LinearGradient } from 'expo-linear-gradient';
+//firebase
+import { realtime } from '../providers/firebase';
+import { update, ref } from 'firebase/database';
 //react native components
 import React, { useEffect, useRef, useMemo } from 'react'
 import {Animated, Easing, Image, PanResponder, StyleSheet, Text, TouchableOpacity, Switch, View } from 'react-native'
@@ -12,6 +16,7 @@ import {Animated, Easing, Image, PanResponder, StyleSheet, Text, TouchableOpacit
 export default function BottomControls({ actions, setActions, bookingStatus, bookingPoints, bookingDetails , bookingHandler, mapRef }) {
 
     //context variables
+    const { firestoreUserData } = useControls();
     const { fonts, colors, rgba } = useThemes();
     const globalStyles = useGlobalStyles(fonts, colors, rgba);
     const styles = createStyles(fonts, colors, rgba);
@@ -42,21 +47,33 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
 
     const imageDirectionHandler = (instruction) => {
       switch (instruction) {
-        case 'turn left' || `arrive left`: return require('../assets/images/turn-left.png');
-        case 'turn right' || `arrive right`: return require('../assets/images/turn-right.png');
+        case 'turn left':
+          case 'arrive left': return require('../assets/images/turn-left.png');
+        case 'turn right' :
+          case 'arrive right': return require('../assets/images/turn-right.png');
         case 'turn back right' : return require('../assets/images/turn-back-right.png');
         case 'turn back left': return require('../assets/images/turn-back-left.png');
         default:  return require('../assets/images/straight.png');
       }
     };
 
+    const clientPickupHandler = async () => { //update clientOnBoard in bookingDetails
+      const { bookingKey, city } = firestoreUserData?.bookingDetails || {};
+      await update(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails`), { clientOnBoard: true });
+    }
+
+    const callHandler = () => { 
+      console.log(bookingDetails?.clientDetails?.contactNumber);
+    }
+
     //useEffect
     useEffect(() => { 
-      if (Object.entries(bookingDetails?.steps).length) { Animated.timing(animatedY, { toValue: 160, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start(); }
+      if ( bookingDetails.steps && Object.entries(bookingDetails?.steps).length > 0) { Animated.timing(animatedY, { toValue: 160, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start(); }
       else { Animated.timing(animatedY, { toValue: 55, duration: 300, easing: Easing.inOut(Easing.ease), useNativeDriver: true, }).start(); }
     
       const speak = () => {
-        const { instruction, distanceKm, street } = bookingDetails.steps;
+        const { instruction, distanceKm, street } = bookingDetails?.steps;
+        if (!instruction || !distanceKm || !street) return;
         const phrase = `In ${distanceKm} km, ${instruction} at ${street}`;
         Speech.speak(phrase, {
           language: 'fil-PH',
@@ -67,7 +84,7 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
         });
       }
     
-      if ( bookingDetails.steps && Object.entries(bookingDetails?.steps).length ) { speak(); }
+      if ( bookingDetails.steps && Object.entries(bookingDetails?.steps).length > 0 ) { speak(); }
     }, [bookingDetails.steps]);
 
     //render
@@ -88,7 +105,7 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
                 end={{ x: 0, y: 1 }}
                 pointerEvents='none'
               >
-                <Image style={styles.directionImage} source={imageDirectionHandler(bookingDetails?.steps?.instruction)} />
+                <Image style={styles.directionImage} source={imageDirectionHandler(bookingDetails?.steps?.instruction || '')} />
                 <View style={styles.directionInstructions}>
                   <Text style={[styles.directionInstructionsText, { fontSize: 20 }]}>{`${bookingDetails?.steps?.instruction?.toUpperCase() || ''} ( ${bookingDetails?.steps?.distanceKm || 0} km )`}</Text>
                   <Text style={[styles.directionInstructionsText, { fontSize: 17.5 }]}>{`${bookingDetails?.steps?.street || 'an unnamed road'}`}</Text>
@@ -118,12 +135,20 @@ export default function BottomControls({ actions, setActions, bookingStatus, boo
                 thumbColor={colors.tertiary}
                 trackColor={{ false: rgba(colors.tertiary, 0.5), true: colors.primary }}
               />
-            </View> : 
+            </View> 
+            : 
             <View style={[globalStyles.buttonContainer, { flexDirection: 'row' }]}>
-              <TouchableOpacity style={[globalStyles.primaryHollowButton, { flex: 1 }]} onPress={() => clientPickupHandler()}>
+              <TouchableOpacity 
+                style={[globalStyles.primaryHollowButton, { flex: 1 }]} 
+                onPress={() => clientPickupHandler()}
+                disabled={bookingStatus === 'pending'}
+              >
                 <Text style={globalStyles.primaryHollowButtonText}>Client Pickup</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[globalStyles.primaryButton, { flex: .35 }]} onPress={() => callHandler()}>
+              <TouchableOpacity 
+                style={[globalStyles.primaryButton, { flex: .35, backgroundColor: colors.secondary }]} 
+                onPress={() => callHandler()}
+              >
                 <Ionicons name="send" size={22} color={colors.constantWhite} />
               </TouchableOpacity>
             </View>

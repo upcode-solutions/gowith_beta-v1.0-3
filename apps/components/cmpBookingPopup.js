@@ -122,7 +122,7 @@ export default function BookingPopup({
   return (
     <FloatingView
       isVisible={isVisible}
-      onClose={() => {}}
+      onClose={() => rejectHandler()}
       backdropOpacity={.15}
       height={'fit-content'}
       width={Dimensions.get('window').width * .75}
@@ -147,23 +147,23 @@ export default function BookingPopup({
           </View>
           <View style={styles.bookingDetails}>
             <View style={styles.bookingDetailsData}>
-              <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.text, .25) }]}>PICKUP CITY</Text>
+              <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.text, .25) }]}>PICKUP</Text>
               <Text style={[globalStyles.priceContainerText, { fontSize: 17.5 }]} numberOfLines={1}>{collectedBookings[currentIndex]?.clientInformation?.pickupPoint?.city}</Text>
             </View>
             <View style={styles.bookingDetailsData}>
-              <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.text, .25) }]}>DROPOFF CITY</Text>
+              <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.text, .25) }]}>DROPOFF</Text>
               <Text style={[globalStyles.priceContainerText, { fontSize: 17.5 }]} numberOfLines={1}>{collectedBookings[currentIndex]?.clientInformation?.dropoffPoint?.city}</Text>
             </View>
 
-            { collectedBookings[currentIndex] && Object.entries(collectedBookings[currentIndex]?.bookingDetails).map(([key, value], index) => {
-              if (key !== 'queueNumber' && key !== 'bookingKey' && key !== 'timestamp') {
+            { collectedBookings[currentIndex] && Object.entries(collectedBookings[currentIndex]?.bookingDetails)
+              .filter(([key, _]) => key === 'distance' || key === 'duration' || key === 'price')
+              .map(([key, value], index) => {
                 return (
                   <View key={index} style={styles.bookingDetailsData}>
                     <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.text, .25) }]}>{key.toUpperCase()}</Text>
                     <Text style={[globalStyles.priceContainerText, { fontSize: 17.5 }]} numberOfLines={1}>{ key === 'price' ? `Php ${value}` : key === 'duration' ? `${value} min.` : `${value} km`}</Text>
                   </View>
                 )
-              }
             })}
           </View>
         </View>
