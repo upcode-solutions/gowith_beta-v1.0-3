@@ -24,6 +24,11 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
         warningTimeout.current = null; 
     };
 
+    const sosHandler = () => {
+        closeWarning();
+        accidentHandler();
+    };
+
     //useEffects
     useEffect(() => {
         if(actions.tiltWarningVisible) {
@@ -55,7 +60,7 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
                 <TouchableOpacity style={[globalStyles.primaryHollowButton, {flex: 1, borderColor: colors.errorRedBackground}]} onPress={() => closeWarning()}>
                     <Text style={[globalStyles.primaryHollowButtonText, {color: colors.errorRedBackground}]}>Yes</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[globalStyles.primaryButton, {flex: 1, backgroundColor: colors.errorRedBackground}]} onPress={() => accidentHandler()}>
+                <TouchableOpacity style={[globalStyles.primaryButton, {flex: 1, backgroundColor: colors.errorRedBackground}]} onPress={() => sosHandler()}>
                     <Text style={globalStyles.primaryButtonText}>No</Text>
                 </TouchableOpacity>
             </View>

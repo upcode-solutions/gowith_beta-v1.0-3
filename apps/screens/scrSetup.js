@@ -18,7 +18,7 @@ import BottomSheet from '../components/modalBottomSheet';
 import SetupSlider from './pages/sliderSetup'
 import { OtpInput } from './pages/pagesSetup';
 //firebase
-import { firestore } from '../providers/firebase'
+import { auth, firestore } from '../providers/firebase'
 import { collection, query, where, getDocs, setDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 //react native components
 import React, { useEffect, useState, useRef, use } from 'react'
@@ -175,7 +175,7 @@ export default function Setup({ route, navigation }) {
           accountDetails: {
             userType: authLocalData?.type,
             accountUid: authLocalData?.uid,
-            accountStatus: 'unverified',
+            accountStatus: authLocalData?.type === 'clients' ? 'unverified' : 'verified',
             dateCreated: serverTimestamp(),
             suspensionDate: ``,
             suspensionDuration: ``,
@@ -202,14 +202,12 @@ export default function Setup({ route, navigation }) {
         };
         
         if (authLocalData.type === 'clients') { await setDoc(userRef, firestoreUserData); } //set user document
-        else if (authLocalData.type === 'riders') { await updateDoc(userRef, {
-          
-        }); }
+        else if (authLocalData.type === 'riders') { await updateDoc(userRef, firestoreUserData); }
         else { errorHandler('An error has occurred. Please try again.'); }
 
-        setLocalData (prev => ({ ...prev, email: authLocalData?.email, uid: authLocalData?.uid, password: authLocalData?.password, userType: authLocalData?.type }));
-        setFirestoreUserData(firestoreUserData);
-        setLocalControls(prev => ({ ...prev, loggedIn: true }));
+        await setFirestoreUserData(firestoreUserData);
+        await setLocalData (prev => ({ ...prev, email: authLocalData?.email, uid: authLocalData?.uid, password: authLocalData?.password, userType: authLocalData?.type }));
+        await setLocalControls(prev => ({ ...prev, loggedIn: true }));
         setLoading(false);
 
       } catch (error) { 

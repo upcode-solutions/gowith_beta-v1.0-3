@@ -17,7 +17,7 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
     const [route, setRoute] = useState([]);
 
     //functions =================================================================
-    const isNearby = (coord1, coord2, threshold = 0.001) => {
+    const isNearby = (coord1, coord2, threshold = 0.0001) => {
         if (!coord1 || !coord2) return false;
         const latDiff = Math.abs(coord1.latitude - coord2.latitude);
         const lngDiff = Math.abs(coord1.longitude - coord2.longitude);
@@ -44,7 +44,6 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                     setBookingDetails((prev) => ({ ...prev, steps: steps[0] }));
                 }   
             }
-
 
             if (isNearby(from, to)) {
                 setBookingDetails((prev) => ({ ...prev, distance: 0, price: 0, duration: 0 }));
@@ -80,6 +79,11 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
             }, { duration: 500 });
         }
     }, [heading, points, points[2].latitude, points[2].longitude]);
+
+    useEffect(() => {
+        if ( points[0].latitude && points[0].longitude && points[2].latitude && points[2].longitude ) { mapRef.current.fitToCoordinates([points[0], points[2]], { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, }); } 
+        else { mapRef.current.fitToCoordinates([points[0], points[1]], { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, }); }
+    }, [points[0], points[2]]);
     
     //render ====================================================================
     return (

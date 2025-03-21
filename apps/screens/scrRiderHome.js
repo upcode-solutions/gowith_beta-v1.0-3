@@ -7,7 +7,7 @@ import Loading from '../components/cmpLoading';
 import Mapview from '../components/cpmMapview';
 import BookingIndicator from '../components/cmpBookingIndicator';
 import BookingPopup from '../components/cmpBookingPopup';
-import BottomControls from '../components/cmpBottomControls';
+import RiderBottomControls from '../components/cmpRiderBottomControls';
 import AccidentPopup from '../components/cmpAccidentPopup';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,7 @@ export default function RiderHome() {
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
-  const [riderDetails, setRiderDetails] = useState({ heading: 0, tiltStatus: null });
+  const [riderDetails, setRiderDetails] = useState({ heading: 0, tiltStatus: 'nominal' });
   const [bookingDetails, setBookingDetails] = useState({ queueNumber: 0, clientDetails: {}, bookingDetails: {}, steps: {} });
   const [actions, setActions] = useState({ loading: true, autoAccept: false, locationAnimated: false, tiltWarningVisible: false, clientInformationVisible: false });
 
@@ -73,36 +73,6 @@ export default function RiderHome() {
       }
     }
   };
-  
-  const cancelBookingHandler = async() => { //cancel booking
-    const { username } = firestoreUserData.personalInformation;
-
-    try {
-      const { bookingKey, city } = firestoreUserData.bookingDetails;
-      if(bookingKey) {
-        await remove(ref(realtime, `bookings/${city}/${bookingKey}/riderInformation`));
-        
-        const bookingSnapshot = await get(ref(realtime, `bookings/${city}`));
-        const bookingData = bookingSnapshot.exists() ? 
-        Object.values(bookingSnapshot.val()).filter(booking => booking?.bookingDetails?.queueNumber > 0).length + 1 : 0;
-        await update(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails`), { queueNumber: bookingData, clientOnBoard: false });
-
-        await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), {
-          accountDetails: { ...firestoreUserData.accountDetails, flags: firestoreUserData.accountDetails.flags + 1 },
-          bookingDetails: {}
-        });
-      } else { await remove(ref(realtime, `riders/${bookingPoints[2].city}/${username}`)); }
-
-      setBookingDetails({ queueNumber: 0, clientDetails: {}, bookingDetails: {}, steps: {} });
-
-      setBookingPoints((prev) => { //update client location
-        const newPoint = [...prev];
-        newPoint[0] = { ...prev[0], longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' };
-        newPoint[1] = { ...prev[1], longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' };
-        return newPoint;
-      });
-    } catch (e) { console.log(e); }
-  };
 
   const bookingHandler = async() => { //rider queue handler, active or inactive
     const { username, firstName, lastName } = firestoreUserData.personalInformation;
@@ -113,7 +83,28 @@ export default function RiderHome() {
 
         setBookingStatus('pending');
 
-        cancelBookingHandler();
+        if(bookingKey) {
+          await remove(ref(realtime, `bookings/${city}/${bookingKey}/riderInformation`));
+          
+          const bookingSnapshot = await get(ref(realtime, `bookings/${city}`));
+          const bookingData = bookingSnapshot.exists() ? 
+          Object.values(bookingSnapshot.val()).filter(booking => booking?.bookingDetails?.queueNumber > 0).length + 1 : 0;
+          await update(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails`), { queueNumber: bookingData, clientOnBoard: false });
+
+          await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), {
+            accountDetails: { ...firestoreUserData.accountDetails, flags: firestoreUserData.accountDetails.flags + 1 },
+            bookingDetails: {}
+          });
+        } else { await remove(ref(realtime, `riders/${bookingPoints[2].city}/${username}`)); }
+
+        setBookingDetails({ queueNumber: 0, clientDetails: {}, bookingDetails: {}, steps: {} });
+
+        setBookingPoints((prev) => { //update client location
+          const newPoint = [...prev];
+          newPoint[0] = { ...prev[0], longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' };
+          newPoint[1] = { ...prev[1], longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' };
+          return newPoint;
+        });
 
         setTimeout(() => { setBookingStatus('inactive'); }, 3000);
 
@@ -143,40 +134,18 @@ export default function RiderHome() {
     }
   };
 
-  const createAccidentReport = async () => {
-    try {
-      const accidentRef = doc(collection(firestore, "accidents"));  
-      const { username, firstName, lastName } = firestoreUserData.personalInformation;
-      const { plateNumber, vehicleColor, vehicleModel } = firestoreUserData.vehicleDetails;
-      const { bookingKey, city } = firestoreUserData.bookingDetails;
-
-      await setDoc(accidentRef, {
-        accidentDetails: { accidentId: accidentRef.id, accidentDateTime: serverTimestamp(), detectionStatus: true, location: bookingPoints[2] },
-        bookingDetails: bookingKey && city ? { bookingKey, city, ...bookingDetails.bookingDetails  } : {},
-        clientDetails: bookingKey && city ? { ...bookingDetails.clientDetails, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1] } : {},
-        riderDetails: { firstName, lastName, username, vehicleColor, vehicleModel, plateNumber },
-      });
-
-    } catch (error) {
-      console.error("Error adding document: ", error);      
-    }
-  };
-  
-
   const accidentHandler = async() => { //accident handler
+    console.log('accidentHandler');
+    
     const { clientOnBoard } = bookingDetails.bookingDetails || {};
-
     if(!actions.locationAnimated || firestoreUserData.accountDetails.accidentOccured) { return; }
+
+    const accidentRef = doc(collection(firestore, "accidents"));  
     
     if (clientOnBoard) {
       
     } else {
-      await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), { 
-        'accountDetails.accidentOccured': true,
-        'accountDetails.accidentTimestamp': serverTimestamp(),
-      });
-      cancelBookingHandler();
-      createAccidentReport();
+      await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), { 'accountDetails.accidentOccured': true,'accountDetails.accidentId': [ ...firestoreUserData.accountDetails.accidentId, accidentRef.id ], });
       setBookingStatus('inactive');
     }
   };
@@ -184,14 +153,14 @@ export default function RiderHome() {
   //useEffects =============================================================
   useEffect(() => { //map animation after rider is locatied
     if (bookingPoints[2].latitude !== '' && bookingPoints[2].longitude !== '' && !actions.locationAnimated && !firestoreUserData.accountDetails.accidentOccured) {
-      setTimeout(() => { mapRef.current.animateCamera({ center: { latitude: bookingPoints[2].latitude, longitude: bookingPoints[2].longitude }, pitch: 50, heading: riderDetails.heading, zoom: 45 }, { duration: 500, }); }, 2800);
+      setTimeout(() => { mapRef.current && mapRef.current.animateCamera({ center: { latitude: bookingPoints[2].latitude || 0, longitude: bookingPoints[2].longitude || 0 }, pitch: 50, heading: riderDetails.heading || 0, zoom: 45 }, { duration: 500, }); }, 2800);
       setActions((prev) => ({ ...prev, locationAnimated: true }));
     }
   },[bookingPoints[2]]);
 
   useEffect(() => { //location, tilt and heading tracker
-    const { username, firstName, lastName } = firestoreUserData.personalInformation;
-    const { plateNumber, vehicleColor, vehicleModel } = firestoreUserData.vehicleDetails;
+    const { username, firstName, lastName } = firestoreUserData.personalInformation || {};
+    const { plateNumber, vehicleColor, vehicleModel } = firestoreUserData.vehicleDetails || {};
     const { heading, tiltStatus } = riderDetails;
     let locationSubscription = null;
     
@@ -204,7 +173,7 @@ export default function RiderHome() {
           const { latitude, longitude } = location.coords; 
           if (!latitude || !longitude) { return }
           
-          setTimeout(() => { setActions({ ...actions, loading: false }); }, 2500); 
+          setTimeout(() => { setActions({ ...actions, loading: false }); }, 5000); 
           const currentCity = await Location.reverseGeocodeAsync(location.coords);
           
           setBookingPoints((prev) => { //update client location
@@ -215,10 +184,7 @@ export default function RiderHome() {
 
           if(bookingStatus === 'active' && city) {
             const { bookingKey, key } = firestoreUserData.bookingDetails;
-            await update(ref(realtime, `bookings/${bookingPoints[2].city}/${bookingKey}/riderInformation/riderStatus`), { 
-              location: { latitude, longitude },
-              city: bookingPoints[2].city,
-            });
+            await update(ref(realtime, `bookings/${bookingPoints[2].city}/${bookingKey}/riderInformation/riderStatus`), { location: { latitude, longitude },city: bookingPoints[2].city,});
           } else if(bookingStatus === 'onQueue') {
             try {
               if(currentCity[0].city === bookingPoints[2].city && bookingStatus === 'onQueue') {
@@ -235,7 +201,7 @@ export default function RiderHome() {
                 }
   
                 const cityQueueSnapshot = await get(ref(realtime, `riders/${currentCity[0].city}`));
-                const cityQueueData = cityQueueSnapshot.exists() ? Object.keys(cityQueueSnapshot.val()).length + 1 : 1;
+                const cityQueueData = cityQueueSnapshot.exists() ? Object.entries(cityQueueSnapshot.val()).filter(([_, value]) => value.queueNumber > 0).length + 1 : 1;
   
                 await set(ref(realtime, `riders/${currentCity[0].city}/${username}`), {
                   personalInformation: { username, firstName, lastName },
@@ -257,7 +223,6 @@ export default function RiderHome() {
               return newPoint;
             });
           }
-          
         }
       );
     }
@@ -270,6 +235,7 @@ export default function RiderHome() {
           return prev;
         });
       });
+      
       //tilt listener
       Accelerometer.setUpdateInterval(1000);
       const tiltListener = Accelerometer.addListener(tiltHandler)
@@ -278,7 +244,7 @@ export default function RiderHome() {
     }
 
     startLocationTracking();
-    headerTiltHandler();
+    if(bookingStatus === 'active' || bookingStatus === 'onQueue') { headerTiltHandler(); }
     return () => { locationSubscription && locationSubscription.remove(); };
   },[bookingStatus]);
 
@@ -291,7 +257,7 @@ export default function RiderHome() {
           const snapshotData = snapshot.val();
           const sortedQueue = Object.entries(snapshotData)
             .map(([username, data]) => ({ username, ...data.riderStatus }))
-            .filter((rider) => rider.queueNumber !== null)
+            .filter((rider) => rider.queueNumber !== null || rider.queueNumber === 0)
             .sort((a, b) => a.queueNumber - b.queueNumber);
           
           const updates = {};
@@ -446,7 +412,13 @@ export default function RiderHome() {
 
   //render =================================================================
   if (actions.loading) { //loading screen
-    return <Loading loadingBackgroundColor={colors.background} loadingMessage={'Preparing Map...'} ActivityIndicatorColor={colors.primary}textColor={colors.primary}/>
+    return (
+      <Loading 
+      loadingBackgroundColor={colors.background} 
+      loadingMessage={'Preparing Map...'} 
+      ActivityIndicatorColor={colors.primary}textColor={colors.primary}
+      />
+    )
   }
 
   return (
@@ -469,7 +441,7 @@ export default function RiderHome() {
         bookingDetails={bookingDetails} setBookingDetails={setBookingDetails}
       />
 
-      <BottomControls //bottom controls
+      <RiderBottomControls //bottom controls
         actions={actions} setActions={setActions}
         bookingStatus={bookingStatus}
         bookingPoints={bookingPoints}

@@ -13,7 +13,7 @@ import { update, ref } from 'firebase/database';
 import React, { useEffect, useRef, useMemo } from 'react'
 import {Animated, Easing, Image, PanResponder, StyleSheet, Text, TouchableOpacity, Switch, View } from 'react-native'
 
-export default function BottomControls({ actions, setActions, bookingStatus, bookingPoints, bookingDetails , bookingHandler, mapRef }) {
+export default function RiderBottomControls({ actions, setActions, bookingStatus, bookingPoints, bookingDetails , bookingHandler, mapRef }) {
 
     //context variables
     const { firestoreUserData } = useControls();

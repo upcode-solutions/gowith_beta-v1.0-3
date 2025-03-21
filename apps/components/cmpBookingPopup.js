@@ -20,6 +20,9 @@ export default function BookingPopup({
   bookingDetails, setBookingDetails,
 }) {
 
+  //console.log(`rejectedBookings: ${rejectedBookings}`);
+  
+  
   //context variables
   const { localData, firestoreUserData } = useControls(); 
   const { colors, fonts, rgba } = useThemes();
@@ -29,7 +32,7 @@ export default function BookingPopup({
   const [collectedBookings, setCollectedBookings] = useState([])
   const [isVisible, setIsVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   //functions
   const badgeHandler = (status) => {
     switch (status) {
@@ -41,6 +44,8 @@ export default function BookingPopup({
 
   const rejectHandler = async () => {
     setRejectedBookings((prev) => [...prev, collectedBookings[currentIndex]?.bookingDetails?.bookingKey]);
+    console.log(collectedBookings);
+    
     setIsVisible(false);
     
     if (currentIndex < collectedBookings.length - 1) { setTimeout(() => { setCurrentIndex((prev) => prev + 1) }, 200); }
@@ -50,8 +55,9 @@ export default function BookingPopup({
       const riderSnapshot = await get(ref(realtime, `riders/${bookingPoints[2].city}`));
       const riderSize = riderSnapshot.exists() ? riderSnapshot.size : null;
 
-      if (riderSize > 1) { 
+      if (riderSize > 1 && bookingDetails.queueNumber !== riderSize ) {
         await update(ref(realtime, `riders/${bookingPoints[2].city}/${uid}/riderStatus/`), { queueNumber: riderSize });
+        await remove(ref(realtime, `riders/${bookingPoints[2].city}/${uid}`));
       }
     } catch (e) { console.log(e); }
   }
@@ -110,13 +116,20 @@ export default function BookingPopup({
 
   //useEffects
   useEffect(() => {
-    const filteredBookings = bookingCollection.filter((booking) => !rejectedBookings.includes(booking.bookingDetails.bookingKey) || booking?.bookingDetails.queueNumber);
-    setCollectedBookings(filteredBookings)
-  }, [bookingCollection])
+    const filteredBookings = bookingCollection.filter(booking => 
+        !rejectedBookings.includes(booking.bookingDetails.bookingKey)
+    );
+    setCollectedBookings(filteredBookings);
+  }, [bookingCollection, rejectedBookings]);
 
   useEffect(() => {
-    if (collectedBookings.length > currentIndex && Object.entries(bookingDetails?.clientDetails).length === 0 && bookingStatus === 'onQueue') { setIsVisible(true) } 
-    else { setIsVisible(false) }
+    const shouldShowPopup = 
+    collectedBookings.length > 0 && 
+    currentIndex < collectedBookings.length && 
+    Object.entries(bookingDetails?.clientDetails || {}).length === 0 && 
+    bookingStatus === 'onQueue';
+    
+    setIsVisible(shouldShowPopup);
   }, [collectedBookings, currentIndex])
 
   return (
@@ -133,7 +146,7 @@ export default function BookingPopup({
             <Image style={styles.avatar} source={require('../assets/images/emptyProfile.png')} />
             <View style={styles.clientDetails}>
               <Text style={[styles.badge, { backgroundColor: badgeHandler(collectedBookings[currentIndex]?.clientInformation?.accountStatus)}]} numberOfLines={1}>
-                {collectedBookings[currentIndex]?.clientInformation?.accountStatus.toUpperCase()}
+                {collectedBookings[currentIndex]?.bookingDetails?.accountStatus.toUpperCase()}
               </Text>
               <Text style={[globalStyles.priceContainerText, { fontSize: 17.5 }]} numberOfLines={1}>
                 <Text style={[globalStyles.priceContainerText, { fontSize: 17.5, color: rgba(colors.primary, .25) }]}>Name: </Text>
