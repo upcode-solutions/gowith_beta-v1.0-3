@@ -12,16 +12,7 @@ import { get, ref, remove, set, update } from 'firebase/database'
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, Text, Image, View, TouchableOpacity, PanResponder, Dimensions } from 'react-native'
 
-export default function BookingPopup({ 
-  bookingStatus, setBookingStatus,
-  bookingPoints, setBookingPoints,
-  bookingCollection, 
-  rejectedBookings, setRejectedBookings,
-  bookingDetails, setBookingDetails,
-}) {
-
-  //console.log(`rejectedBookings: ${rejectedBookings}`);
-  
+export default function BookingPopup({ bookingStatus, setBookingStatus, bookingPoints, setBookingPoints, bookingCollection, rejectedBookings, setRejectedBookings, bookingDetails, setBookingDetails, }) {
   
   //context variables
   const { localData, firestoreUserData } = useControls(); 
@@ -32,7 +23,7 @@ export default function BookingPopup({
   const [collectedBookings, setCollectedBookings] = useState([])
   const [isVisible, setIsVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  
   //functions
   const badgeHandler = (status) => {
     switch (status) {
@@ -44,23 +35,23 @@ export default function BookingPopup({
 
   const rejectHandler = async () => {
     setRejectedBookings((prev) => [...prev, collectedBookings[currentIndex]?.bookingDetails?.bookingKey]);
-    console.log(collectedBookings);
-    
     setIsVisible(false);
     
     if (currentIndex < collectedBookings.length - 1) { setTimeout(() => { setCurrentIndex((prev) => prev + 1) }, 200); }
-
+    
     try {
       const { uid } = localData;
       const riderSnapshot = await get(ref(realtime, `riders/${bookingPoints[2].city}`));
       const riderSize = riderSnapshot.exists() ? riderSnapshot.size : null;
-
-      if (riderSize > 1 && bookingDetails.queueNumber !== riderSize ) {
+  
+      if (riderSize > 1 && bookingDetails.queueNumber !== riderSize) {
         await update(ref(realtime, `riders/${bookingPoints[2].city}/${uid}/riderStatus/`), { queueNumber: riderSize });
         await remove(ref(realtime, `riders/${bookingPoints[2].city}/${uid}`));
       }
     } catch (e) { console.log(e); }
-  }
+
+  };
+  
 
   const acceptHandler = async() => { 
     const { uid, userType } = localData;
@@ -116,21 +107,22 @@ export default function BookingPopup({
 
   //useEffects
   useEffect(() => {
-    const filteredBookings = bookingCollection.filter(booking => 
-        !rejectedBookings.includes(booking.bookingDetails.bookingKey)
-    );
-    setCollectedBookings(filteredBookings);
-  }, [bookingCollection, rejectedBookings]);
+    const filteredBookings = bookingCollection.filter((booking) => !rejectedBookings.includes(booking.bookingDetails.bookingKey) || booking?.bookingDetails.queueNumber);
+    setCollectedBookings(filteredBookings)
+  }, [bookingCollection]);
 
   useEffect(() => {
-    const shouldShowPopup = 
-    collectedBookings.length > 0 && 
-    currentIndex < collectedBookings.length && 
-    Object.entries(bookingDetails?.clientDetails || {}).length === 0 && 
-    bookingStatus === 'onQueue';
     
-    setIsVisible(shouldShowPopup);
-  }, [collectedBookings, currentIndex])
+    const isBookingValid = 
+    collectedBookings.length > currentIndex && 
+    bookingDetails?.clientDetails && 
+    Object.keys(bookingDetails.clientDetails).length === 0 && 
+    bookingStatus === 'onQueue' &&
+    !rejectedBookings.includes(collectedBookings[currentIndex]?.bookingDetails?.bookingKey);
+    
+    setIsVisible(isBookingValid);
+    //console.log(`rejectedBookings: ${rejectedBookings}`);
+  }, [collectedBookings, currentIndex]);
 
   return (
     <FloatingView

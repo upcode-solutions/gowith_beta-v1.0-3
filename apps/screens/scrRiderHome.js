@@ -182,9 +182,9 @@ export default function RiderHome() {
             return newPoint;
           });
 
-          if(bookingStatus === 'active' && city) {
-            const { bookingKey, key } = firestoreUserData.bookingDetails;
-            await update(ref(realtime, `bookings/${bookingPoints[2].city}/${bookingKey}/riderInformation/riderStatus`), { location: { latitude, longitude },city: bookingPoints[2].city,});
+          if(bookingStatus === 'active') {
+            const { bookingKey, city } = firestoreUserData.bookingDetails;
+            await update(ref(realtime, `bookings/${city}/${bookingKey}/riderInformation/riderStatus`), { location: { latitude, longitude },city: bookingPoints[2].city,});
           } else if(bookingStatus === 'onQueue') {
             try {
               if(currentCity[0].city === bookingPoints[2].city && bookingStatus === 'onQueue') {
@@ -231,7 +231,7 @@ export default function RiderHome() {
       //heading listener
       const headingListener = await Location.watchHeadingAsync((headingData) => {
         setRiderDetails((prev) => {
-          if (Math.abs(headingData.trueHeading - prev.heading) > 10) { return { ...prev, heading: headingData.trueHeading };}
+          if (Math.abs(headingData.trueHeading - prev.heading) > 25) { return { ...prev, heading: headingData.trueHeading };}
           return prev;
         });
       });

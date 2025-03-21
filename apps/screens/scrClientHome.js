@@ -37,7 +37,7 @@ export default function ClientHome() {
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
   const [riderDetails, setRiderDetails] = useState({});
-  const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', queueNumber: '0'});
+  const [bookingDetails, setBookingDetails] = useState({ price: '0', duration: '0', distance: '0', queueNumber: '0', clientOnBoard: false });
   const [actions, setActions] = useState({ loading: true, locationAnimated: false, locationInputVisible: false, fareDetailsVisible: false, fetchingLocation: false, riderInformationVisible: false, onFocus: '' });
   
   //references ============================================================
@@ -210,8 +210,41 @@ export default function ClientHome() {
         }
       });
   
-      return () => queueUnsubscribe();
+      return () => queueUnsubscribe() 
     }
+  }, [bookingStatus]);
+
+  useEffect(() => {
+    const { bookingKey, city } = firestoreUserData.bookingDetails;
+    if (!bookingKey || !city) return;
+    let lastLocation = null;
+    
+    const bookingSubscriber = onValue(
+      ref(realtime, `bookings/${city}/${bookingKey}`), 
+      async(snapshot) => {
+        if (!snapshot.exists()) return;
+        
+        const riderInfo = snapshot.val()?.riderInformation?.riderStatus;
+        const bookingDetails = snapshot.val()?.bookingDetails;
+        if (!riderInfo) return;
+
+        if (JSON.stringify(lastLocation) !== JSON.stringify(riderInfo.location)) {
+          lastLocation = riderInfo.location;
+          const [address] = await Location.reverseGeocodeAsync(riderInfo.location);
+          setBookingPoints(prev => {
+            const newPoint = [...prev];
+            newPoint[2] = { ...riderInfo.location,...riderInfo.city,geoName: address.formattedAddress };
+            return newPoint;
+          });
+        }
+  
+        setRiderDetails(prev => ({ ...prev,heading: riderInfo.heading,tiltStatus: riderInfo.tiltStatus }));
+        setBookingDetails(prev => ({ ...prev, clientOnBoard: bookingDetails.clientOnBoard }));
+      }
+    );
+  
+    return () => bookingSubscriber();
+  
   }, [bookingStatus]);
   
   //render ================================================================
@@ -287,11 +320,12 @@ export default function ClientHome() {
       />
 
       <Mapview 
+        bookingStatus={bookingStatus}
         mapRef={mapRef}
         points={bookingPoints}
         bookingDetails={bookingDetails}
         setBookingDetails={setBookingDetails}
-        header={riderDetails?.header}
+        heading={riderDetails?.heading}
       />
 
     </View>

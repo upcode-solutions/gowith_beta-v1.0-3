@@ -8,14 +8,14 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-export default function Mapview({ points, mapRef, bookingDetails, setBookingDetails, heading }) {
+export default function Mapview({ bookingStatus, points, mapRef, bookingDetails, setBookingDetails, heading }) {
 
     //context providers
     const { firestoreTransactionFee, localData } = useControls();
     const { colors } = useThemes();
     //local state
     const [route, setRoute] = useState([]);
-
+    
     //functions =================================================================
     const isNearby = (coord1, coord2, threshold = 0.0001) => {
         if (!coord1 || !coord2) return false;
@@ -50,7 +50,7 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                 return;
             }
             
-            if (localData?.userType === 'clients') {
+            if (localData?.userType === 'clients' && bookingStatus === 'inactive') {
                 const distance = parseFloat((routes[0].distance / 1000).toFixed(2));
                 const duration = parseFloat((routes[0].duration / 60).toFixed(2));
                 const price = distance <= 2 
@@ -58,15 +58,19 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                     : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
     
                 setBookingDetails({ distance, price, duration });
+
+
             }
         }catch(e) { console.warn("Error fetching route:", e); }
     }
 
     //useEffects ================================================================
     useEffect(() => {
-        setRoute([]);
+        if (localData?.userType === 'clients') { setRoute([]); }
         if (points[2].latitude && points[2].longitude) { fetchRoute(points[2], points[0]); }
         else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) { fetchRoute(points[0], points[1]); } 
+        console.log(bookingDetails.clientOnBoard);
+        
     },[points])
 
     useEffect(() => {
@@ -78,7 +82,7 @@ export default function Mapview({ points, mapRef, bookingDetails, setBookingDeta
                 //zoom: 60, // Set your desired zoom level here
             }, { duration: 500 });
         }
-    }, [heading, points, points[2].latitude, points[2].longitude]);
+    }, [heading, points[2].latitude, points[2].longitude]);
 
     useEffect(() => {
         if ( points[0].latitude && points[0].longitude && points[2].latitude && points[2].longitude ) { mapRef.current.fitToCoordinates([points[0], points[2]], { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, }); } 

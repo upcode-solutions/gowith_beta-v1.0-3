@@ -46,14 +46,30 @@ export default function RiderBottomControls({ actions, setActions, bookingStatus
     }, [bookingStatus]); // Recalculate when bookingStatus changes
 
     const imageDirectionHandler = (instruction) => {
-      switch (instruction) {
-        case 'turn left':
-          case 'arrive left': return require('../assets/images/turn-left.png');
-        case 'turn right' :
-          case 'arrive right': return require('../assets/images/turn-right.png');
-        case 'turn back right' : return require('../assets/images/turn-back-right.png');
-        case 'turn back left': return require('../assets/images/turn-back-left.png');
-        default:  return require('../assets/images/straight.png');
+      const lowercaseInstruction = instruction.toLowerCase();
+      if (lowercaseInstruction.includes('left') && (
+        lowercaseInstruction.includes('turn') || 
+        lowercaseInstruction.includes('arrive') || 
+        lowercaseInstruction.includes('end'))) {
+        return require('../assets/images/turn-left.png');
+      } else if (lowercaseInstruction.includes('right') && (
+        lowercaseInstruction.includes('turn') || 
+        lowercaseInstruction.includes('arrive') ||
+        lowercaseInstruction.includes('end'))) {
+        return require('../assets/images/turn-right.png');
+      } else if (lowercaseInstruction.includes('back right') ||
+        lowercaseInstruction.includes('uturn') &&
+        lowercaseInstruction.includes('right') ||
+        lowercaseInstruction.includes('uturn')
+      ) {
+        return require('../assets/images/turn-back-right.png');
+      } else if (lowercaseInstruction.includes('back left') ||
+        lowercaseInstruction.includes('uturn') &&
+        lowercaseInstruction.includes('left')
+      ) {
+        return require('../assets/images/turn-back-left.png');
+      } else {
+        return require('../assets/images/straight.png');
       }
     };
 
@@ -107,8 +123,8 @@ export default function RiderBottomControls({ actions, setActions, bookingStatus
               >
                 <Image style={styles.directionImage} source={imageDirectionHandler(bookingDetails?.steps?.instruction || '')} />
                 <View style={styles.directionInstructions}>
-                  <Text style={[styles.directionInstructionsText, { fontSize: 20 }]}>{`${bookingDetails?.steps?.instruction?.toUpperCase() || ''} ( ${bookingDetails?.steps?.distanceKm || 0} km )`}</Text>
-                  <Text style={[styles.directionInstructionsText, { fontSize: 17.5 }]}>{`${bookingDetails?.steps?.street || 'an unnamed road'}`}</Text>
+                  <Text style={[styles.directionInstructionsText, { fontSize: 20 }]} numberOfLines={1}>{`${bookingDetails?.steps?.instruction?.toUpperCase() || ''} ( ${bookingDetails?.steps?.distanceKm || 0} km )`}</Text>
+                  <Text style={[styles.directionInstructionsText, { fontSize: 17.5 }]} numberOfLines={1}>{`${bookingDetails?.steps?.street || 'an unnamed road'}`}</Text>
                 </View>
               </LinearGradient>
             </View>
@@ -139,9 +155,9 @@ export default function RiderBottomControls({ actions, setActions, bookingStatus
             : 
             <View style={[globalStyles.buttonContainer, { flexDirection: 'row' }]}>
               <TouchableOpacity 
-                style={[globalStyles.primaryHollowButton, { flex: 1 }]} 
+                style={[globalStyles.primaryHollowButton, { flex: 1, opacity: bookingStatus !== 'active' || !bookingDetails?.steps?.instruction?.includes('arrive') && !bookingDetails?.steps?.distanceKm?.includes('0.00') ? 0.5 : 1 }]} 
                 onPress={() => clientPickupHandler()}
-                disabled={bookingStatus === 'pending'}
+                disabled={bookingStatus === 'pending' || !bookingDetails.steps?.instruction?.includes('arrive') && !bookingDetails?.steps?.distanceKm?.includes('0.00') }
               >
                 <Text style={globalStyles.primaryHollowButtonText}>Client Pickup</Text>
               </TouchableOpacity>

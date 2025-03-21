@@ -180,7 +180,7 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
         >
           <View style={{ gap: 10}}>
             <View style={[globalStyles.priceContainer, { flexDirection: `column`}]}>
-              {Object.entries(bookingDetails).map(([key, value], index) => (
+              {Object.entries(bookingDetails).filter(([key, value]) => ['price', 'distance', 'duration'].includes(key)).map(([key, value], index) => (
                 <View key={index} style={[globalStyles.priceDataContainer, { width: '100%'}]}>
                   <Text style={[globalStyles.priceContainerText, { color: rgba(colors.text, 0.5) }]}>{key.toUpperCase()}</Text>
                   <Text style={globalStyles.priceContainerText}>{key === 'price' ? `₱ ${value}` : key === 'distance' ? `${value} km` : `~ ${Math.ceil(value)} min`}</Text>
