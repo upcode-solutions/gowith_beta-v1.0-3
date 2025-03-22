@@ -55,12 +55,18 @@ export default function Auth({ navigation }) {
   }
 
   const checkFirestore = async (userCredential) => { //checks if user exists in firestore
+
     //checking if user exists in firestore
     const uerType = ['clients', 'riders'];
     for (const type of uerType) { //loop through user types
       const userCollection = collection(firestore, type); //get user collection
       const userQuery = query(userCollection, where('accountDetails.accountUid', '==', userCredential.user.uid)); //query user collection
-      const userSnapshot = await getDocs(userQuery); //get user snapshot
+      const userSnapshot = await getDocs(userQuery);
+      console.log('Query results:', {
+          empty: userSnapshot.empty,
+          size: userSnapshot.size,
+          docs: userSnapshot.docs.map(doc => ({id: doc.id, data: doc.data()}))
+      });
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
         if (user?.personalInformation) { return { exist: true, type: type }; }
@@ -72,10 +78,14 @@ export default function Auth({ navigation }) {
   }
 
   const setNecessaryData = async (uid, type, email, password) => { //sends necessary data to firestore
+
+    
     try {
       const userCollection = collection(firestore, type);
       const userDoc = doc(userCollection, uid);
       const docSnapshot = await getDoc(userDoc);
+      console.log("auth - setNecessaryData: ", docSnapshot.data());
+      
       
       if (docSnapshot.exists()) { 
         if (docSnapshot.data().personalInformation.password !== credentials.password) { 
@@ -84,7 +94,7 @@ export default function Auth({ navigation }) {
             'personalInformation.password': credentials.password,
             'personalInformation.oldPassword': [...docSnapshot.data().personalInformation.oldPassword, docSnapshot.data().personalInformation.password],
             'accountDetails.passwordChangedDate': serverTimestamp(),
-           });
+          });
         } else  { updateDoc(userDoc, { 'accountDetails.deviceId': Device.deviceName }); }
         setFirestoreUserData(docSnapshot.data());
         setLocalData((prev) => ({ ...prev, email: email, uid: uid, password: password, userType: type }));
@@ -152,6 +162,7 @@ export default function Auth({ navigation }) {
           if (!response.user.emailVerified) { throw new Error('Email not verified. Please check your inbox.'); }
           const {exist, type} = await checkFirestore(response); // check if user exists in firestore
           if (exist) { setNecessaryData(response.user.uid, type, email, credentials.password); }
+          else { throw new Error('Username does not exist. Please provide your email instead.'); }
         } else { throw new Error('Username does not exist. Please provide your email instead.'); }
       }
     } catch (error) {

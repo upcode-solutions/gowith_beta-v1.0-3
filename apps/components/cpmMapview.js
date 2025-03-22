@@ -29,7 +29,6 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
             const { routes } = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`)).json();
             if (!routes?.length) return;
             const routeCoordinates = routes[0].geometry.coordinates.map(([lon, lat]) => ({ latitude: lat, longitude: lon }));
-
             setRoute(routeCoordinates);
 
             if(localData?.userType === 'riders') {
@@ -58,20 +57,27 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
                     : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
     
                 setBookingDetails({ distance, price, duration });
-
-
             }
         }catch(e) { console.warn("Error fetching route:", e); }
     }
 
     //useEffects ================================================================
     useEffect(() => {
-        if (localData?.userType === 'clients') { setRoute([]); }
-        if (points[2].latitude && points[2].longitude) { fetchRoute(points[2], points[0]); }
-        else if(points[0].latitude && points[0].longitude && points[1].latitude && points[1].longitude) { fetchRoute(points[0], points[1]); } 
-        console.log(bookingDetails.clientOnBoard);
+        const { clientOnBoard } = bookingDetails.bookingDetails || {};
         
-    },[points])
+        const { userType } = localData;
+        //console.log(`userType: ${userType}, clientOnBoard: ${clientOnBoard}`);
+
+        if(userType === 'riders' && bookingStatus === 'inactive' || bookingStatus === 'onQueue') { 
+            setRoute([]); 
+            setBookingDetails((prev) => ({ ...prev, steps: {} }));
+        }
+        
+        if (userType === 'clients' && bookingStatus !== 'active') { fetchRoute(points[0], points[1]); }
+        else if (bookingStatus === 'active' && !clientOnBoard) { fetchRoute(points[2], points[0]); }
+        else if (bookingStatus === 'active' && clientOnBoard) { fetchRoute(points[2], points[1]); }
+        
+    }, [bookingDetails.bookingDetails?.clientOnBoard, points, bookingStatus]);
 
     useEffect(() => {
         if (mapRef.current && points[2].latitude && points[2].longitude) {
@@ -84,10 +90,10 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
         }
     }, [heading, points[2].latitude, points[2].longitude]);
 
-    useEffect(() => {
+    /* useEffect(() => {
         if ( points[0].latitude && points[0].longitude && points[2].latitude && points[2].longitude ) { mapRef.current.fitToCoordinates([points[0], points[2]], { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, }); } 
         else { mapRef.current.fitToCoordinates([points[0], points[1]], { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, }); }
-    }, [points[0], points[2]]);
+    }, [points[0], points[2]]); */
     
     //render ====================================================================
     return (
@@ -119,7 +125,7 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
                                 : require('../assets/images/vectorRider.png')
                             }
                             anchor={{ x: 0.5, y: 0.5 }}
-                            rotation={point.type === 'clients' ? 0 : heading}
+                            rotation={heading}
                         />
                     ) : (
                         isNearby(
@@ -146,10 +152,16 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
             ))}
 
 
-            { route && route.length ?
-                <Polyline coordinates={route} strokeWidth={7.5} strokeColor={colors.tertiary} />
-                : null
-            }
+            { route.length > 0 && (
+                <Polyline
+                    coordinates={route}
+                    strokeWidth={7.5}
+                    strokeColor={colors.tertiary}
+                    zIndex={1}
+                    lineCap="round"
+                    lineJoin="round"
+                />
+            )}
         </MapView>
     );
 }

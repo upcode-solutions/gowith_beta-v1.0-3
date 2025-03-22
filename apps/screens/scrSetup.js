@@ -173,6 +173,8 @@ export default function Setup({ route, navigation }) {
 
         const firestoreUserData = {
           accountDetails: {
+            accidentOccured: false,
+            accidentId: [],
             userType: authLocalData?.type,
             accountUid: authLocalData?.uid,
             accountStatus: authLocalData?.type === 'clients' ? 'unverified' : 'verified',

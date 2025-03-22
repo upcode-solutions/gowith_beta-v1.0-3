@@ -16,14 +16,13 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
     const globalStyles = useGlobalStyles(fonts, colors, rgba);
     const styles = createStyles(fonts, colors, rgba);
     //local variables
-    const [countDown, setCountDown] = useState(60);
+    const [countDown, setCountDown] = useState(15);
 
     //functions
     const closeWarning = () => {
         setActions((prev) => ({...prev, tiltWarningVisible: false}));
         warningTimeout.current = null; 
     };
-
     const sosHandler = () => {
         closeWarning();
         accidentHandler();
@@ -35,8 +34,8 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
             if(countDown > 0) {
                 let timer = setTimeout(() => setCountDown((prev) => prev - 1), 1000);
                 return () => clearTimeout(timer);
-            }
-        } else { setTimeout(() => setCountDown(60), 2500); }
+            } else { sosHandler(); }
+        } else { setTimeout(() => setCountDown(15), 2500); }
     }, [countDown, actions.tiltWarningVisible]);
 
   return (
@@ -46,7 +45,7 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
         backdropOpacity={.10}
         backdropColor={colors.errorRedBackground}
         height={'fit-content'}
-        width={Dimensions.get('window').width - 30}
+        width={Dimensions.get('window').width * .75}
     >
         <View style={styles.container}>
             <View style={styles.messageContainer}>

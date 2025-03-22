@@ -3,15 +3,16 @@ import { useThemes } from '../providers/themes';
 import { useGlobalStyles } from '../providers/styles';
 //components
 import BottomSheet from '../components/modalBottomSheet';
+import FloatingView from '../components/modalFloatingView';
 //libraries
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 //react native hooks
 import React, { useState, useEffect, useRef } from 'react'
-import { StyleSheet, Text, TextInput, TouchableOpacity, Animated, Easing, PanResponder, Keyboard, View } from 'react-native'
+import { StyleSheet, Text, TextInput, TouchableOpacity, Animated, Easing, PanResponder, Keyboard, Dimensions, View } from 'react-native'
 
-export default function ClientBottomControls({ bookingPoints, setBookingPoints, mapRef, bookingStatus, bookingDetails, bookingHandler }) {
+export default function ClientBottomControls({ bookingPoints, setBookingPoints, mapRef, bookingStatus, bookingDetails, bookingHandler, transactionCompleteHandler }) {
 
     //context variables ======================================================
     const { fonts, colors, rgba } = useThemes();
@@ -21,6 +22,7 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
     const [actions, setActions] = useState({ locationInputVisible: false, fareDetailsVisible: false, onFocus: '', keyboardVisible: false, fetchLocation: false });  
     const count = actions.onFocus === 'pickup' ? 0 : 1;
     const [location, setLocation] = useState([]);
+    const [confirmationAction, setConfirmationAction] = useState({ isVisible: false, action: '', message: '' });
     //references =============================================================
     const inputRef = useRef(null);
     const animatedY = useRef(new Animated.Value(170)).current; // Start collapsed
@@ -105,6 +107,12 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
         mapRef.current.fitToCoordinates([bookingPoints[0], bookingPoints[1]], { edgePadding: { top: 100, right: 100, bottom: 150, left: 100 }, animated: true });
     };
 
+    const confirmationHandler = () => { 
+        if (confirmationAction.action === 'transactionComplete') { transactionCompleteHandler() }
+  
+        setConfirmationAction({ isVisible: false, action: '', message: '' });
+    }
+
     //useEffect ==============================================================
     useEffect(() => {
         const timeout = setTimeout(() => { if (inputRef.current) { inputRef.current.focus(); } }, 100); // Delay to ensure component is ready
@@ -127,10 +135,36 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
         if (!actions.keyboardVisible && location.geoName) { fetchLocation(); }
     }, [actions.keyboardVisible, location.geoName]);
 
+    useEffect(() => {
+        console.log(`Booking Status: ${bookingDetails?.bookingDetails.bookingStatus}`);
+        if (bookingDetails?.bookingDetails.bookingStatus === 'complete') {
+            setConfirmationAction({ isVisible: true, action: "transactionComplete", message: 'Transaction Complete, please pay the rider with the right amount before you confirm' }); 
+        }
+    }, [bookingDetails.bookingDetails]);
+
 
     //rendering ==============================================================
   return (
     <View style={styles.bottomContainer}>
+
+        <FloatingView
+            isVisible={confirmationAction.isVisible}
+            onClose={() => {}}
+            backdropOpacity={.25}
+            height={'fit-content'}
+            width={Dimensions.get('window').width * .75}
+        >
+        <View style={styles.confirmationContainer}>
+            <View style={styles.messageContainer}>
+            <Text style={[globalStyles.priceContainerText, { textAlign: 'center', fontSize: 15 }]}>{confirmationAction.message}</Text>
+            </View>
+            <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[globalStyles.primaryButton, { flex: 1 }]} onPress={() => confirmationHandler()}>
+                <Text style={globalStyles.primaryButtonText}>CONFIRM</Text>
+            </TouchableOpacity>
+            </View>
+        </View>
+        </FloatingView>
 
         <BottomSheet
             isVisible={actions.locationInputVisible}
@@ -270,6 +304,26 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
 }
 
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
+    confirmationContainer: {
+        height: 'fit-content',
+        width: '100%',
+        backgroundColor: colors.background,
+        alignSelf: 'center',
+        borderRadius: 12,
+        padding: 15,
+        gap: 10
+    },
+    messageContainer: {
+        padding: 15,
+        borderRadius: 12,
+        backgroundColor: colors.form,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10
+    },
     inputContainer: {
         height: '100%',
         paddingBottom: 15,
