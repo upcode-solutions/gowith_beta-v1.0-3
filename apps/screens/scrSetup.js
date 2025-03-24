@@ -34,7 +34,7 @@ export default function Setup({ route, navigation }) {
     const { showNotification } = useNotification();
     //local variables
     const [loading, setLoading] = useState(false);
-    const [credentials, setCredentials] = useState({ firstname: 'Rez', lastname: 'Angelo', username: 'Dominguez', dob: { date: '2', month: '7', year: '2002' }, weight: '86', contactNumber: '9562517907', otp: '' });
+    const [credentials, setCredentials] = useState({ firstname: '', lastname: '', username: '', dob: { date: '', month: '', year: '' }, weight: '', contactNumber: '', otp: '' });
     const [actionState, setActionState] = useState({ keyboardVisible: false, datePickerVisible: false, eulaVisible: false, eulaAccepted: false, otpModal: false, contactNumberVerified: false });
     const [errorMessage, setErrorMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
@@ -174,7 +174,7 @@ export default function Setup({ route, navigation }) {
         const firestoreUserData = {
           accountDetails: {
             accidentOccured: false,
-            accidentId: [],
+            accidentHistory: [],
             userType: authLocalData?.type,
             accountUid: authLocalData?.uid,
             accountStatus: authLocalData?.type === 'clients' ? 'unverified' : 'verified',

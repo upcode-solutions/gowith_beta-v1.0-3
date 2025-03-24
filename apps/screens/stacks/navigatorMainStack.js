@@ -1,5 +1,4 @@
 //context providers
-import firebase from 'firebase/compat/app'
 import { useControls } from '../../providers/controls'
 //screen navigators
 import Suspended from '../scrSuspended'

@@ -13,7 +13,7 @@ import { realtime, firestore } from '../providers/firebase';
 import { setDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { update, ref, remove } from 'firebase/database';
 //react native components
-import React, { useEffect, useRef, useMemo, useState, use } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 import {Animated, Easing, Image, PanResponder, StyleSheet, Text, TouchableOpacity, Switch, Dimensions, View } from 'react-native'
 
 export default function RiderBottomControls({ actions, setActions, bookingStatus, setBookingStatus, bookingPoints, setBookingPoints, bookingDetails, bookingHandler, mapRef }) {
@@ -96,8 +96,8 @@ export default function RiderBottomControls({ actions, setActions, bookingStatus
       try {
         setBookingStatus('pending');
         await update(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails`), { bookingStatus: 'complete' });
-        await setDoc(doc(firestore, `transactions/${uid}_${bookingKey}`), {
-          bookingDetails: { price, distance, duration, pickupPoint: bookingPoints[0], dropOffPoint: bookingPoints[1], bookingStatus: 'complete', timestamp: serverTimestamp() },
+        await setDoc(doc(firestore, `history/${uid}`), {
+          bookingDetails: { bookingKey, price, distance, duration, pickupPoint: bookingPoints[0], dropOffPoint: bookingPoints[1], bookingStatus: 'complete', timestamp: serverTimestamp() },
           clientInformation: { firstName: clientDetails.firstName, lastName: clientDetails.lastName, username: clientDetails.username },
           riderInformation: { firstName: personalInformation.firstName, lastName: personalInformation.lastName, username: personalInformation.username },
         });
@@ -131,8 +131,6 @@ export default function RiderBottomControls({ actions, setActions, bookingStatus
     }
 
     const confirmationHandler = () => { 
-      console.log(confirmationAction.action);
-      
       if (confirmationAction.action === 'cancelBooking') { bookingHandler() }
       else if (confirmationAction.action === 'startBooking') { bookingHandler() }
       else if (confirmationAction.action === 'clientPickup') { clientPickupHandler() }

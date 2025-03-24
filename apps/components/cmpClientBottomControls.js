@@ -90,9 +90,7 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
 
             Keyboard.dismiss();
             setActions((prev) => ({ ...prev, locationInputVisible: false, onFocus: '' }));
-        } catch (e) {
-            console.log(e);
-        }
+        } catch (e) { console.log(e); }
     }
 
     const swapPoints = () => { //swap locations
@@ -110,7 +108,7 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
     const confirmationHandler = () => { 
         if (confirmationAction.action === 'transactionComplete') { transactionCompleteHandler() }
   
-        setConfirmationAction({ isVisible: false, action: '', message: '' });
+        setConfirmationAction((prev) => ({ ...prev, isVisible: false }));
     }
 
     //useEffect ==============================================================
@@ -136,8 +134,8 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
     }, [actions.keyboardVisible, location.geoName]);
 
     useEffect(() => {
-        console.log(`Booking Status: ${bookingDetails?.bookingDetails.bookingStatus}`);
-        if (bookingDetails?.bookingDetails.bookingStatus === 'complete') {
+        //console.log(`Booking Status: ${bookingDetails?.bookingDetails?.bookingStatus}`);
+        if (bookingDetails?.bookingDetails?.bookingStatus === 'complete') {
             setConfirmationAction({ isVisible: true, action: "transactionComplete", message: 'Transaction Complete, please pay the rider with the right amount before you confirm' }); 
         }
     }, [bookingDetails.bookingDetails]);

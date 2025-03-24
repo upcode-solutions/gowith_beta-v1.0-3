@@ -16,7 +16,7 @@ import { auth, firestore } from '../providers/firebase'
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 //react native components
-import React, { useEffect, useState, useRef, use } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Text, View, Image, ImageBackground, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Dimensions, Animated, Easing } from 'react-native'
 import { update } from 'firebase/database';
 
@@ -31,7 +31,7 @@ export default function Auth({ navigation }) {
   //local variables =========================================================================================
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState({ register: false, keyboardVisible: false, modalLoading: false });
-  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
+  const [credentials, setCredentials] = useState({ usernameEmail: '', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
   const [errorMessage, setErrorMessage] = useState('');
   //references ==============================================================================================
   const inputRef = useRef([]);
@@ -62,11 +62,11 @@ export default function Auth({ navigation }) {
       const userCollection = collection(firestore, type); //get user collection
       const userQuery = query(userCollection, where('accountDetails.accountUid', '==', userCredential.user.uid)); //query user collection
       const userSnapshot = await getDocs(userQuery);
-      console.log('Query results:', {
+      /* console.log('Query results:', {
           empty: userSnapshot.empty,
           size: userSnapshot.size,
           docs: userSnapshot.docs.map(doc => ({id: doc.id, data: doc.data()}))
-      });
+      }); */
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
         if (user?.personalInformation) { return { exist: true, type: type }; }
@@ -78,14 +78,11 @@ export default function Auth({ navigation }) {
   }
 
   const setNecessaryData = async (uid, type, email, password) => { //sends necessary data to firestore
-
     
     try {
       const userCollection = collection(firestore, type);
       const userDoc = doc(userCollection, uid);
       const docSnapshot = await getDoc(userDoc);
-      console.log("auth - setNecessaryData: ", docSnapshot.data());
-      
       
       if (docSnapshot.exists()) { 
         if (docSnapshot.data().personalInformation.password !== credentials.password) { 

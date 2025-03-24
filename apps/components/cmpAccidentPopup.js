@@ -25,7 +25,7 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
     };
     const sosHandler = () => {
         closeWarning();
-        accidentHandler();
+        setTimeout(() => accidentHandler(), 1500);
     };
 
     //useEffects
@@ -34,7 +34,9 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
             if(countDown > 0) {
                 let timer = setTimeout(() => setCountDown((prev) => prev - 1), 1000);
                 return () => clearTimeout(timer);
-            } else { sosHandler(); }
+            } else { 
+                sosHandler(); 
+            }
         } else { setTimeout(() => setCountDown(15), 2500); }
     }, [countDown, actions.tiltWarningVisible]);
 

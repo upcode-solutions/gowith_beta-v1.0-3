@@ -57,12 +57,12 @@ export default function Suspended() {
                     
         
                     if (currentDate < combinedSuspensionDate) {
-                        console.log('Suspension active');
+                        //console.log('Suspension active');
                         const daysLeft = new Date(combinedSuspensionDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }); // Correct date
                         setDaysLeft(daysLeft);
                     } else {
                         setLoading(true);
-                        console.log('Suspension lifted');
+                        //console.log('Suspension lifted');
                         const userDocRef = doc(firestore, localData.userType, localData.uid);
                         await updateDoc(userDocRef, { 
                             'accountDetails.suspensionDate': '', 
@@ -103,7 +103,7 @@ export default function Suspended() {
                         <Image style={styles.image} source={require('../assets/images/vectorSuspended.png')}/>
                     </View>
                     <View style={styles.contentContainer}>
-                        <Text style={[styles.contentText, { fontFamily: fonts.Righteous}]}>{`Dear Valued Customer,`}</Text>
+                        <Text style={[styles.contentText, { fontFamily: fonts.Righteous}]}>{`Dear Valued User,`}</Text>
                         <Text style={styles.contentText}>{contentHandler()}{`\n\nIf you have any questions or concerns, please don't hesitate to email us on gowith.philippines@gmail.com`}</Text>
                         <Text style={[styles.contentText, { fontFamily: fonts.Righteous, color: colors.primary,}]}>{`Sincerely,\nThe GoWith Philippines Team`}</Text>
                     </View>

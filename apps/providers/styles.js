@@ -13,7 +13,7 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     },
     imageBackground: {
         width: '100%',
-        height: '100%',
+        height: '100%'
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
