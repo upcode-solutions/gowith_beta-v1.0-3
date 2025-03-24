@@ -20,7 +20,7 @@ export default function Suspended() {
     const { fonts, colors, rgba } = useThemes();
     const globalStyles = useGlobalStyles(fonts, colors, rgba);
     const styles = createStyles(fonts, colors, rgba);
-    const { suspensionDate, suspensionDuration, suspensionReason, suspensionAmount } = firestoreUserData?.accountDetails;
+    const { suspensionDuration, suspensionReason, suspensionAmount } = firestoreUserData?.accountDetails;
     const { username } = firestoreUserData?.personalInformation;
     //local variables =================================================================================
     const [ loading, setLoading ] = useState(false);
@@ -44,25 +44,31 @@ export default function Suspended() {
     useEffect(() => {
         const checkSuspension = async () => {
             try {
-                if (suspensionDate) {
-                    const dateOfSuspension = parseInt(suspensionDate, 10); // in seconds
-                    const durationOfSuspension = parseInt(suspensionDuration, 10) * 86400; // in seconds
-                    const currentDate = Math.floor(new Date().getTime() / 1000); // convert to seconds
-                    const combinedSuspensionDate = dateOfSuspension + durationOfSuspension;
+                if (Object.keys(firestoreUserData.accountDetails.suspensionDate).length > 0) {
+                    const { nanoseconds, seconds } = firestoreUserData.accountDetails.suspensionDate;
+                    const suspensionDate = seconds * 1000 + Math.round(nanoseconds / 1e6); // Milliseconds
+                    const durationOfSuspension = parseInt(suspensionDuration, 10) * 86400000; // Milliseconds
+        
+                    if(!suspensionDuration) { return; }
+
+                    const currentDate = Date.now(); // Current timestamp in milliseconds
+                    const combinedSuspensionDate = suspensionDate + durationOfSuspension;
+                    console.log(durationOfSuspension);
                     
+        
                     if (currentDate < combinedSuspensionDate) {
-                        console.log('suspension active');
-                        const daysLeft = new Date(combinedSuspensionDate * 1000).toDateString();
+                        //console.log('Suspension active');
+                        const daysLeft = new Date(combinedSuspensionDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }); // Correct date
                         setDaysLeft(daysLeft);
-                    } else if (currentDate > combinedSuspensionDate) {
-                        setLoading(true)
-                        console.log('suspension lifted');
+                    } else {
+                        setLoading(true);
+                        //console.log('Suspension lifted');
                         const userDocRef = doc(firestore, localData.userType, localData.uid);
-                        await updateDoc(userDocRef, { //update and +1 to the suspension counter
+                        await updateDoc(userDocRef, { 
                             'accountDetails.suspensionDate': '', 
-                            'accountDetails.suspensionDuration': '', 
+                            'accountDetails.suspensionDuration': ``, 
                             'accountDetails.suspensionReason': '', 
-                            'accountDetails.suspensionAmount': suspensionAmount + 1
+                            'accountDetails.suspensionAmount': (suspensionAmount || 0) + 1
                         });
                     }
                 }
@@ -97,7 +103,7 @@ export default function Suspended() {
                         <Image style={styles.image} source={require('../assets/images/vectorSuspended.png')}/>
                     </View>
                     <View style={styles.contentContainer}>
-                        <Text style={[styles.contentText, { fontFamily: fonts.Righteous}]}>{`Dear Valued Customer,`}</Text>
+                        <Text style={[styles.contentText, { fontFamily: fonts.Righteous}]}>{`Dear Valued User,`}</Text>
                         <Text style={styles.contentText}>{contentHandler()}{`\n\nIf you have any questions or concerns, please don't hesitate to email us on gowith.philippines@gmail.com`}</Text>
                         <Text style={[styles.contentText, { fontFamily: fonts.Righteous, color: colors.primary,}]}>{`Sincerely,\nThe GoWith Philippines Team`}</Text>
                     </View>

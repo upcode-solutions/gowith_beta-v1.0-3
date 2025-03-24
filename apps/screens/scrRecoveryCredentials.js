@@ -35,7 +35,7 @@ export default function RecoveryCredentials({ navigation }) {
   const styles = createStyles(fonts, colors, rgba);
   //local Variables =========================================
   const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState({ email: '', username: '', contactNumber: '9562517907', firestoreUserData: {} });
+  const [credentials, setCredentials] = useState({ email: '', username: '', contactNumber: '', firestoreUserData: {} });
   const [actionState, setActionState] = useState({ keyboardVisible: false, recoverViaEmail: true, contactNumberVerified: false, otpModal: false });
   const [errorMessage, setErrorMessage] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');

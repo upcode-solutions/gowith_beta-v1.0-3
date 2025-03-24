@@ -1,18 +1,24 @@
 //context providers
+import { useControls } from '../providers/controls';
 import { useThemes } from '../providers/themes';
 //libraries
 import { Ionicons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { set } from 'firebase/database';
 //react native hooks
-import React from 'react'
-import { StyleSheet, View, Text } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { StyleSheet, View, Text, TouchableOpacity, ToastAndroid } from 'react-native'
 
-export default function BookingIndicator({ bookingStatus }) {
+export default function BookingIndicator({ bookingStatus, accidentHandler }) {
 
     //context providers
+    const { localData } = useControls();
     const { fonts, colors, rgba } = useThemes();
     const styles = createStyles(fonts, colors, rgba);
+    //local variables
+    const [tapCount, setTapCount] = useState(0);
+    const [lastTapTime, setLastTapTime] = useState(0);
     
-
     //functions
     const bookingStatusHandler = () => {
         let status = '';
@@ -29,10 +35,44 @@ export default function BookingIndicator({ bookingStatus }) {
         return { status, color };
     }
 
+    
+    const clickAccidentHandler = () => {
+        const now = Date.now();
+        const TAP_TIMEOUT = 2500;
+        const REQUIRED_TAPS = 5;
+    
+        if (now - lastTapTime > TAP_TIMEOUT) {
+            // Reset if timeout exceeded
+            setTapCount(1);
+        } else {
+            const newTapCount = tapCount + 1;
+            setTapCount(newTapCount);
+    
+            if (newTapCount === REQUIRED_TAPS) {
+                accidentHandler();
+                setTapCount(0);
+            }
+        }
+        setLastTapTime(now);
+    }
+    
+
+
   return (
     <View style={styles.container}>
-        <Ionicons name="ellipse" size={15} color={bookingStatusHandler().color} />
-        <Text style={[styles.text, { color: bookingStatusHandler().color }]}>{bookingStatusHandler().status.toUpperCase()}</Text>
+        { localData && localData.userType === 'riders' &&
+            <TouchableOpacity 
+                style={[styles.sosButton, { opacity: bookingStatus === 'inactive' ? 0.5 : 1 }]} 
+                onPress={() => clickAccidentHandler()}
+                disabled={bookingStatus === 'inactive'}
+            >
+                <MaterialIcons name="sos" size={24} color={colors.form} />
+            </TouchableOpacity>
+        }
+        <View style={styles.indicatorContainer}>
+            <Ionicons name="ellipse" size={15} color={bookingStatusHandler().color} />
+            <Text style={[styles.text, { color: bookingStatusHandler().color }]}>{bookingStatusHandler().status.toUpperCase()}</Text>
+        </View>
     </View>
   )
 }
@@ -40,22 +80,36 @@ export default function BookingIndicator({ bookingStatus }) {
 const createStyles = (fonts, colors, rgba) => StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: colors.form,
         position: 'absolute',
-        right: 0,
-        top: 0,
+        right: 15,
+        top: 15,
+        gap: 15,
+        zIndex: 1
+    },
+    sosButton: {
+        height: 45,
+        width: 45,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        width: 'fit-content',
-        height: 45,
-        borderRadius: 25,
-        marginTop: 15,
-        marginRight: 15,
-        paddingHorizontal: 15,
-        gap: 10,
-        zIndex: 1,
-        shadowColor: colors.shadowColor,
+        backgroundColor: colors.errorRedBackground,
+        justifyContent: 'center',
+        shadowColor: colors.shadowGray,
         elevation: 5
+    },
+    indicatorContainer: {
+        height: 45,
+        width: 'fit-content',
+        flexDirection: 'row',
+        backgroundColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingRight: 17.5,
+        borderRadius: 50,
+        shadowColor: colors.shadowGray,
+        elevation: 5,
+        gap: 5
     },
     text: {
         fontFamily: fonts.Righteous,

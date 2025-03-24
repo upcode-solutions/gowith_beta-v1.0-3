@@ -16,7 +16,7 @@ import { auth, firestore } from '../providers/firebase'
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 //react native components
-import React, { useEffect, useState, useRef, use } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Text, View, Image, ImageBackground, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Dimensions, Animated, Easing } from 'react-native'
 import { update } from 'firebase/database';
 
@@ -31,7 +31,7 @@ export default function Auth({ navigation }) {
   //local variables =========================================================================================
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState({ register: false, keyboardVisible: false, modalLoading: false });
-  const [credentials, setCredentials] = useState({ usernameEmail: 'gyozamercado@gmail.com', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
+  const [credentials, setCredentials] = useState({ usernameEmail: '', password: 'Noxsie123!', confirmPassword: 'Noxsie123!' });
   const [errorMessage, setErrorMessage] = useState('');
   //references ==============================================================================================
   const inputRef = useRef([]);
@@ -55,12 +55,18 @@ export default function Auth({ navigation }) {
   }
 
   const checkFirestore = async (userCredential) => { //checks if user exists in firestore
+
     //checking if user exists in firestore
     const uerType = ['clients', 'riders'];
     for (const type of uerType) { //loop through user types
       const userCollection = collection(firestore, type); //get user collection
       const userQuery = query(userCollection, where('accountDetails.accountUid', '==', userCredential.user.uid)); //query user collection
-      const userSnapshot = await getDocs(userQuery); //get user snapshot
+      const userSnapshot = await getDocs(userQuery);
+      /* console.log('Query results:', {
+          empty: userSnapshot.empty,
+          size: userSnapshot.size,
+          docs: userSnapshot.docs.map(doc => ({id: doc.id, data: doc.data()}))
+      }); */
       if (userSnapshot.docs.length > 0) { //if user exists in firestore
         const user = userSnapshot.docs[0].data(); //get user data
         if (user?.personalInformation) { return { exist: true, type: type }; }
@@ -72,6 +78,7 @@ export default function Auth({ navigation }) {
   }
 
   const setNecessaryData = async (uid, type, email, password) => { //sends necessary data to firestore
+    
     try {
       const userCollection = collection(firestore, type);
       const userDoc = doc(userCollection, uid);
@@ -84,7 +91,7 @@ export default function Auth({ navigation }) {
             'personalInformation.password': credentials.password,
             'personalInformation.oldPassword': [...docSnapshot.data().personalInformation.oldPassword, docSnapshot.data().personalInformation.password],
             'accountDetails.passwordChangedDate': serverTimestamp(),
-           });
+          });
         } else  { updateDoc(userDoc, { 'accountDetails.deviceId': Device.deviceName }); }
         setFirestoreUserData(docSnapshot.data());
         setLocalData((prev) => ({ ...prev, email: email, uid: uid, password: password, userType: type }));
@@ -152,6 +159,7 @@ export default function Auth({ navigation }) {
           if (!response.user.emailVerified) { throw new Error('Email not verified. Please check your inbox.'); }
           const {exist, type} = await checkFirestore(response); // check if user exists in firestore
           if (exist) { setNecessaryData(response.user.uid, type, email, credentials.password); }
+          else { throw new Error('Username does not exist. Please provide your email instead.'); }
         } else { throw new Error('Username does not exist. Please provide your email instead.'); }
       }
     } catch (error) {

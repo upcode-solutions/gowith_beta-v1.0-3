@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import FloatingView from '../components/modalFloatingView';
 
 const { width, height } = Dimensions.get('window');
 const textBox = { height: 45, width: '100%' };
@@ -12,7 +13,7 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     },
     imageBackground: {
         width: '100%',
-        height: '100%',
+        height: '100%'
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
@@ -87,13 +88,15 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
     },
     primaryHollowButton: {
         width: '100%',
-        height: textBox.height / 2 ,
+        height: textBox.height,
         borderRadius: borderRadius.sm,
-        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
         borderColor: colors.primary,  
     },
     primaryHollowButtonText: {
-        fontFamily: fonts.RubikRegular,
+        fontFamily: fonts.RubikSemiBold,
         fontSize: fontSize.md,
         color: colors.primary,
         alignSelf: 'center',
@@ -134,9 +137,94 @@ export const useGlobalStyles = (fonts, colors, rgba) => StyleSheet.create({
         gap: gapadmar.xs,
     },
     dividerLine: {
-        flex: 1,
+        alignSelf: 'center',
+        width: '100%',
         height: 1.5,
         maxHeight: 1.5,
         backgroundColor: colors.primary,
+    },
+
+    bookingInformationButton: {
+        flexDirection: 'row',
+        width: 'fit-content',
+        height: 45,
+        position: 'absolute',
+        top: 100,
+        right: 0,
+        borderTopLeftRadius: 12,
+        borderBottomLeftRadius: 12,
+        backgroundColor: colors.primary,
+        paddingHorizontal: 10,
+        zIndex: 99,
+    },
+    bookingInformationButtonIcon: {
+        color: colors.constantWhite,
+        fontSize: fontSize.lg,
+        alignSelf: 'center',
+    },
+
+    floatiingView: {
+        backgroundColor: colors.background,
+        padding: 15,
+        height: 'fit-content',
+        gap: gapadmar.sm
+    },
+    floatingViewDataContainer: {
+        backgroundColor: colors.form,
+        padding: 15,
+        borderRadius: borderRadius.sm,
+        gap: gapadmar.xs
+    },
+    floatingViewProfileContainer : {
+        flexDirection: 'row',
+        backgroundColor: rgba(colors.primary, .5),
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: borderRadius.sm,
+        gap: gapadmar.xs
+    },
+    floatingViewImage: {
+        width: 75,
+        height: 75,
+        borderRadius: 50,
+        borderWidth: 1,
+        borderColor: colors.primary,
+        resizeMode: 'contain',
+    },
+    //bottom controls
+    bottomControls: {
+        width: '100%',
+        backgroundColor: colors.background,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 15,
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        gap: 10
+    },
+    priceContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        backgroundColor: colors.form,
+        borderRadius: 12,
+    },
+    priceDataContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+    },
+    priceContainerIcon: {
+        color: colors.primary,
+        fontSize: 20,
+    },
+    priceContainerText: {
+        fontFamily: fonts.Righteous,
+        fontSize: 15,
+        color: colors.text
     },
 });

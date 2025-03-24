@@ -14,13 +14,13 @@ export default function FloatingView({ isVisible, onClose, height, width, backdr
                 onBackdropPress={onClose}
                 backdropColor={backdropColor}
                 backdropOpacity={backdropOpacity}
-                backdropTransitionInTiming={5}
                 backdropTransitionOutTiming={5}
+                backdropTransitionInTiming={5}
                 style={{ justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}
                 animationIn={'zoomIn'}
                 animationOut={'zoomOut'}
             >
-                <View style={{ height: height, width: width, borderRadius: 12, overflow: 'hidden', shadowColor: '#000', elevation: 5 }}>
+                <View style={{ height: height, width: width, borderRadius: 12, overflow: 'hidden', shadowColor: '#000', elevation: 12 }}>
                     {children}
                 </View>
             </Modal>
