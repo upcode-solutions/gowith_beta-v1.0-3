@@ -37,7 +37,7 @@ export default function AccidentPopup({ actions, setActions, warningTimeout, acc
             } else { 
                 sosHandler(); 
             }
-        } else { setTimeout(() => setCountDown(15), 2500); }
+        } else { setTimeout(() => setCountDown(15), 1500); }
     }, [countDown, actions.tiltWarningVisible]);
 
   return (
