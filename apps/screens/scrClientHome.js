@@ -31,8 +31,8 @@ export default function ClientHome() {
   //local variables =======================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
-    { longitude: '', latitude: '', geoName: 'Pateros', city: '', type: 'pickup' },
-    { longitude: '', latitude: '', geoName: 'Taguig', city: '', type: 'dropoff' },
+    { longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' },
+    { longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
@@ -190,8 +190,6 @@ export default function ClientHome() {
       }
     }
 
-    
-
     startLocationTracking();
     fetchQueue();
     return () => { locationSubscription && locationSubscription.remove(); };
@@ -283,7 +281,7 @@ export default function ClientHome() {
         }
 
         setBookingStatus('active');
-        console.log(`heading: ${riderStatus.heading}, tiltStatus: ${riderStatus.tiltStatus}`);
+        //console.log(`heading: ${riderStatus.heading}, tiltStatus: ${riderStatus.tiltStatus}`);
         setRiderDetails((prev) => ({ ...prev, heading: riderStatus.heading, tiltStatus: riderStatus.tiltStatus, personalInformation }));
         setBookingDetails((prev) => ({ ...prev, bookingDetails: { ...prev.bookingDetails, clientOnBoard } }));
     });
