@@ -77,6 +77,8 @@ export default function RecoveryCredentials({ navigation }) {
         while (otp === credentials.otp);
         setCredentials(prev => ({ ...prev, otp: '' }));
         
+        setGeneratedOtp(otp);
+        
         const recepients = `+63${credentials.contactNumber}`;
         const { apiKey, deviceId } = textBeeConfig;
         const response = await axios.post(`https://api.textbee.dev/api/v1/gateway/devices/${deviceId}/send-sms`, {
@@ -87,7 +89,6 @@ export default function RecoveryCredentials({ navigation }) {
           setLoading(false);
           setLocalControls(prev => ({ ...prev, cdTimestamp: new Date().getTime() / 1000 }));
           showNotification('SMS has been sent. Please check your inbox.', 'success', 5000);
-          setGeneratedOtp(otp);
         }
       } else { throw new Error('Contact Number does not exist. Please try again.'); }
 

@@ -60,7 +60,7 @@ export default function ClientHome() {
         await remove(ref(realtime, `bookings/${city}/${bookingKey}`));
 
         await updateDoc(doc(firestore, localData.userType, localData.uid), { 
-          accountDetails: { ...firestoreUserData.accountDetails, flags: riderDetails?.personalInformation !== '' ? flag + 1 : flag }, //accountDetails flag
+          accountDetails: { ...firestoreUserData.accountDetails, flags: riderDetails?.personalInformation ? flag + 1 : flag }, //accountDetails flag
           bookingDetails: {} //remove booking key from firestore
         });
 
