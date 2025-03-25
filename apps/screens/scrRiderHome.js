@@ -141,6 +141,7 @@ export default function RiderHome() {
       const { bookingKey, city } = firestoreUserData.bookingDetails || {};
       const clientOnBoard = await get(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails/clientOnBoard`)).then(res => res.exists() ? res.val() : null);
       setActions((prev) => ({ ...prev, accidentOccured: true }));
+      setBookingStatus('inactive');
       await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), { 'accountDetails.accidentOccured': true });
       
       if (bookingKey && city) { //booked rider

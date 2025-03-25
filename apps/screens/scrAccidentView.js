@@ -77,7 +77,7 @@ export default function AccidentView() {
   await updateDoc(doc(firestore, `riders/hacS2bUiCPM2GXPJx4JWPRN7iCW2`), data);  
 }
 
-  const errorMessageHandler = (message, type, duration) => { //error handler
+  const errorMessageHandler = (message) => { //error handler
     setErrorMessage(message);
     showNotification(message, 'error', 5000);
   }
@@ -88,14 +88,13 @@ export default function AccidentView() {
     const { clientOnBoard } = bookingDetails?.bookingDetails || {};
     const { username, firstName, lastName } = firestoreUserData?.personalInformation || {};
     const { accidentStatus } = firestoreUserData?.accountDetails || {};
+
     const accidentRef = doc(collection(firestore, "accidents"));
   
     if (!necessaryData || !firestoreUserData) return console.log("Missing necessary data");
   
     const lastAccident = accidentHistory?.length ? accidentHistory[accidentHistory.length - 1] : null;
-    const latestAccident = lastAccident
-      ? await getDoc(doc(firestore, `accidents/${lastAccident}`)).then(res => res.exists() ? res.data() : {})
-      : {};
+    const latestAccident = lastAccident ? await getDoc(doc(firestore, `accidents/${lastAccident}`)).then(res => res.exists() ? res.data() : {}) : {};
   
     if (lastAccident && Date.now() - (latestAccident?.accidentDetails?.accidentDateTime?.toMillis?.() || 0) < 10800000 || accidentStatus === 'pending') {
       return console.log("Accident report blocked");
@@ -109,6 +108,11 @@ export default function AccidentView() {
         });
       } else if (userType === 'riders') {
         const { vehicleColor, vehicleModel, plateNumber } = firestoreUserData?.vehicleDetails || {};
+
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High
+        });
+
   
         if (clientOnBoard) {
           await update(ref(realtime, `bookings/${city}/${bookingKey}`), { 
@@ -118,7 +122,7 @@ export default function AccidentView() {
         }
   
         const data = { 
-          accidentDetails: { accidentDateTime: serverTimestamp(), accidentId: accidentRef.id, detectionStatus: true, location: '', type: `${userType} - accident ${accidentType}` },
+          accidentDetails: { accidentDateTime: serverTimestamp(), accidentId: accidentRef.id, detectionStatus: true, location: { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }, type: `${userType} - accident ${accidentType}` },
           riderInformation: { username, firstName, lastName, vehicleColor, vehicleModel, plateNumber },
           clientInformation: bookingDetails?.clientInformation || {},
           bookingDetails: bookingDetails?.bookingDetails ? {
@@ -148,7 +152,6 @@ export default function AccidentView() {
   const submitHandler = async() => { //lift accident
     
     //detects if there is a + in the front of the input
-    
     try {
       if (input[0] === '+') {
       } else if (firestoreUserData.personalInformation.password === input) {
@@ -163,18 +166,20 @@ export default function AccidentView() {
         if (necessaryData.userType === 'riders') {;
           const { accountDetails, bookingDetails } = firestoreUserData || {};
           const lastAccident = accountDetails.accidentHistory[accountDetails.accidentHistory.length - 1] || [];
-          console.log(lastAccident.length);
           
           if (lastAccident.length) {
             await updateDoc(doc(firestore, `accidents/${lastAccident}`), { 'accidentDetails.detectionStatus': false });
           }
+
+          const { clientOnBoard } = necessaryData.bookingDetails.bookingDetails || {};
           
           await updateDoc(doc(firestore, `${necessaryData.userType}/${necessaryData.uid}`), { 
             'accountDetails.accidentOccured': false, 
             'accountDetails.accidentStatus': 'settled',
-            'accountDetails.suspensionDuration': bookingDetails?.bookingDetails?.clientOnBoard ? `6` : `3`,
+            'accountDetails.suspensionDuration': clientOnBoard ? `7` : `3`,
             'accountDetails.suspensionDate': serverTimestamp(),
-            'accountDetails.suspensionReason': 'Negligence resulting to false accident report'
+            'accountDetails.suspensionReason': 'Negligence resulting to false accident report',
+            'bookingDetails': {}
           });
           
           if (bookingDetails?.bookingDetails?.clientOnBoard) {
@@ -190,13 +195,11 @@ export default function AccidentView() {
               }
             });
           }
-          
-          
         }
       }
     } catch (error) {
       console.log(`${userType} create accident report`, error);
-      setErrorMessage('Unknown Input, Please try again.');
+      errorMessageHandler('Unknown Input, Please try again.');
     }
   }
 
@@ -219,7 +222,9 @@ export default function AccidentView() {
             let bookingSnapshot = null;
             if (bookingKey && city) { bookingSnapshot = await get(ref(realtime, `bookings/${city}/${bookingKey}`)).then(res => res.exists() ? res.val() : null);  }
     
-            setNecessaryData({ userType, bookingKey, city, uid, accidentHistory, bookingDetails: bookingSnapshot });
+            setTimeout(() => {
+              setNecessaryData({ userType, bookingKey, city, uid, accidentHistory, bookingDetails: bookingSnapshot });
+            }, 1000);
         } catch (error) {  console.log(`${userType} init`, error); }
     };
 

@@ -31,8 +31,8 @@ export default function ClientHome() {
   //local variables =======================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
-    { longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' },
-    { longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' },
+    { longitude: '', latitude: '', geoName: 'Pateros', city: '', type: 'pickup' },
+    { longitude: '', latitude: '', geoName: 'Taguig', city: '', type: 'dropoff' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'riders' },
     { longitude: '' , latitude: '', geoName: '', city: '', type: 'clients' },
   ]);
@@ -245,14 +245,14 @@ export default function ClientHome() {
     const bookingSubscriber = onValue(ref(realtime, `bookings/${city}/${bookingKey}`), async(snapshot) => {
         if (!snapshot.exists()) return;
         const bookingData = snapshot.val();
-        console.log("Updated bookingData:", bookingData);
+        //console.log("Updated bookingData:", bookingData);
         
         const riderInformation = bookingData?.riderInformation;
         const bookingDetails = bookingData?.bookingDetails;
 
         if (bookingDetails) {
             setBookingDetails((prev) => ({ ...prev, bookingDetails: { ...prev.bookingDetails, bookingStatus: bookingDetails.bookingStatus } }));
-            if (bookingDetails.accidentOccured) accidentOccuredHandler();
+            if (bookingDetails.accidentOccured && bookingDetails.accidentId) accidentOccuredHandler();
         }
 
         if (!riderInformation) {
