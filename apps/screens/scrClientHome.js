@@ -22,13 +22,13 @@ import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View} from 'reac
 
 export default function ClientHome() {
 
-  //contexts providers ===================================================
+  //contexts providers ====================================================
   const { localControls, localData, firestoreUserData } = useControls();
   const { fonts, colors, rgba } = useThemes();
   const globalStyles = useGlobalStyles(fonts, colors, rgba);
   const styles = createStyles(fonts, colors, rgba);
   const { showNotification } = useNotification();
-  //local variables =======================================================
+  //local variables ========================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
     { longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' },
@@ -190,8 +190,6 @@ export default function ClientHome() {
       }
     }
 
-    
-
     startLocationTracking();
     fetchQueue();
     return () => { locationSubscription && locationSubscription.remove(); };
@@ -245,14 +243,14 @@ export default function ClientHome() {
     const bookingSubscriber = onValue(ref(realtime, `bookings/${city}/${bookingKey}`), async(snapshot) => {
         if (!snapshot.exists()) return;
         const bookingData = snapshot.val();
-        console.log("Updated bookingData:", bookingData);
+        //console.log("Updated bookingData:", bookingData);
         
         const riderInformation = bookingData?.riderInformation;
         const bookingDetails = bookingData?.bookingDetails;
 
         if (bookingDetails) {
             setBookingDetails((prev) => ({ ...prev, bookingDetails: { ...prev.bookingDetails, bookingStatus: bookingDetails.bookingStatus } }));
-            if (bookingDetails.accidentOccured) accidentOccuredHandler();
+            if (bookingDetails.accidentOccured && bookingDetails.accidentId) accidentOccuredHandler();
         }
 
         if (!riderInformation) {
@@ -283,7 +281,7 @@ export default function ClientHome() {
         }
 
         setBookingStatus('active');
-        console.log(`heading: ${riderStatus.heading}, tiltStatus: ${riderStatus.tiltStatus}`);
+        //console.log(`heading: ${riderStatus.heading}, tiltStatus: ${riderStatus.tiltStatus}`);
         setRiderDetails((prev) => ({ ...prev, heading: riderStatus.heading, tiltStatus: riderStatus.tiltStatus, personalInformation }));
         setBookingDetails((prev) => ({ ...prev, bookingDetails: { ...prev.bookingDetails, clientOnBoard } }));
     });
