@@ -22,13 +22,13 @@ import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View} from 'reac
 
 export default function ClientHome() {
 
-  //contexts providers ===================================================
+  //contexts providers ====================================================
   const { localControls, localData, firestoreUserData } = useControls();
   const { fonts, colors, rgba } = useThemes();
   const globalStyles = useGlobalStyles(fonts, colors, rgba);
   const styles = createStyles(fonts, colors, rgba);
   const { showNotification } = useNotification();
-  //local variables =======================================================
+  //local variables ========================================================
   const [bookingStatus, setBookingStatus] = useState('inactive');
   const [bookingPoints, setBookingPoints] = useState([
     { longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' },
