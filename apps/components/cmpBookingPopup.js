@@ -52,7 +52,6 @@ export default function BookingPopup({ bookingStatus, setBookingStatus, bookingP
 
   };
   
-
   const acceptHandler = async() => { 
     const { uid, userType } = localData;
     const { bookingKey, distance, duration, price } = collectedBookings[currentIndex]?.bookingDetails;

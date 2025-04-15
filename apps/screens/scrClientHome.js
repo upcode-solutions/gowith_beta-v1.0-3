@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 //firebase
 import { realtime, firestore } from '../providers/firebase';
 import { set, ref, remove, push, get, onValue, update } from 'firebase/database';
-import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, Timestamp, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 //react native hooks
 import React, { useState, useEffect, useRef, act, use } from 'react'
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
@@ -94,7 +94,7 @@ export default function ClientHome() {
   
         if (queueNumber && queueNumber > 0) {
           await set(ref(realtime, `bookings/${bookingPoints[0].city}/${key}`), {
-            bookingDetails:{ accidentId: '', accidentOccured: false, accidentTime: '', clientOnBoard: false, accountStatus: accountStatus, bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration},
+            bookingDetails:{ accidentId: '', bookingStatus: 'onGoing', accidentOccured: false, accidentTime: '', clientOnBoard: false, accountStatus: accountStatus, bookingKey: key, queueNumber: queueNumber, timestamp: new Date().getTime(), price: price, distance: distance, duration: duration},
             clientInformation:{ username: username, contactNumber: contactNumber, weight: weight, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1], firstName: firstName, lastName: lastName },
           });
     
@@ -111,7 +111,33 @@ export default function ClientHome() {
     }
   }
 
-  const transactionCompleteHandler = () => { console.log('complete'); }
+  const transactionCompleteHandler = async () => { 
+
+    const { bookingKey } = firestoreUserData.bookingDetails || {};
+
+    console.log(bookingDetails);
+    
+    await setDoc(doc(firestore, 'transactions', bookingKey), {
+      bookingDetails: { bookingKey, pickupPoint: bookingPoints[0], dropoffPoint: bookingPoints[1], price: bookingDetails.price, distance: bookingDetails.distance, duration: bookingDetails.duration, timestamp: serverTimestamp() },
+      clientInformation: { username: firestoreUserData.personalInformation.username, firstName: firestoreUserData.personalInformation.firstName, lastName: firestoreUserData.personalInformation.lastName },
+      riderInformation: { ...riderDetails.personalInformation, vehicleInformation: riderDetails.vehicleInformation },
+    });
+
+    setBookingStatus('inactive');
+    setBookingDetails({ price: '0', duration: '0', distance: '0', queueNumber: '0', bookingDetails: {} });
+    setBookingPoints((prev) => {
+      const newPoint = [...prev];
+      newPoint[0] = { ...prev[1], longitude: '', latitude: '', geoName: '', city: '', type: 'pickup' };
+      newPoint[1] = { ...prev[1], longitude: '', latitude: '', geoName: '', city: '', type: 'dropoff' };
+      newPoint[2] = { ...prev[2], longitude: '', latitude: '', geoName: '', city: '', type: 'riders' };
+      return newPoint;
+    });
+
+    await updateDoc(doc(firestore, localData.userType, localData.uid), {  bookingDetails: {} });
+    await remove(ref(realtime, `bookings/${firestoreUserData.bookingDetails.city}/${bookingKey}`));
+
+    console.log('Transaction complete');
+  }
 
   const accidentOccuredHandler = async() => { 
     try {
@@ -256,7 +282,7 @@ export default function ClientHome() {
         if (!riderInformation) {
             console.log('No rider assigned yet.');
             setBookingStatus('onQueue');
-            setRiderDetails({});
+            bookingStatus?.bookingStatus === 'onGoing' && setRiderDetails({});
             setBookingDetails({ price: '0', duration: '0', distance: '0', queueNumber: '0', bookingDetails: {} });
             setBookingPoints((prev) => {
                 const newPoint = [...prev];
@@ -266,7 +292,7 @@ export default function ClientHome() {
             return;
         }
 
-        const { personalInformation, riderStatus } = riderInformation;
+        const { personalInformation, riderStatus, vehicleInformation } = riderInformation;
         const { clientOnBoard } = bookingData?.bookingDetails || {};
         if (!riderStatus || !riderStatus.location) return;
 
@@ -282,7 +308,7 @@ export default function ClientHome() {
 
         setBookingStatus('active');
         //console.log(`heading: ${riderStatus.heading}, tiltStatus: ${riderStatus.tiltStatus}`);
-        setRiderDetails((prev) => ({ ...prev, heading: riderStatus.heading, tiltStatus: riderStatus.tiltStatus, personalInformation }));
+        setRiderDetails((prev) => ({ ...prev, heading: riderStatus.heading, tiltStatus: riderStatus.tiltStatus, personalInformation, vehicleInformation }));
         setBookingDetails((prev) => ({ ...prev, bookingDetails: { ...prev.bookingDetails, clientOnBoard } }));
     });
 

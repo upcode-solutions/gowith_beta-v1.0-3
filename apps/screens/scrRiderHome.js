@@ -56,13 +56,17 @@ export default function RiderHome() {
     setRiderDetails(prev => ({ ...prev, tiltStatus: newStatus }));
     
     if (newStatus === 'critical' && !warningTimeout.current) {
-        warningTimeout.current = setTimeout(() => setActions(prev => ({ ...prev, tiltWarningVisible: true })), 5000);
+      warningTimeout.current = setTimeout(() => setActions(prev => ({ ...prev, tiltWarningVisible: true })), 5000);
     } else if (newStatus === 'nominal' && warningTimeout.current) {
-        clearTimeout(warningTimeout.current);
-        warningTimeout.current = null;
-        setActions(prev => ({ ...prev, tiltWarningVisible: false }));
+      clearTimeout(warningTimeout.current);
+      warningTimeout.current = null;
+      setActions(prev => ({ ...prev, tiltWarningVisible: false }));
     }
   };
+
+  useEffect(() => {
+    console.log(new Date().toLocaleString('en-US', { hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' }));
+  }, [riderDetails.tiltStatus]);
 
   const fetchBookingCollection = async() => {
     if(bookingStatus !== 'onQueue') { return; }
@@ -136,14 +140,14 @@ export default function RiderHome() {
   };
 
   const accidentHandler = async() => { //accident handler
-    console.log(`accident handler`);
     try {
+      setBookingStatus('inactive');
       const { bookingKey, city } = firestoreUserData.bookingDetails || {};
       const clientOnBoard = await get(ref(realtime, `bookings/${city}/${bookingKey}/bookingDetails/clientOnBoard`)).then(res => res.exists() ? res.val() : null);
       setActions((prev) => ({ ...prev, accidentOccured: true }));
-      setBookingStatus('inactive');
       await updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), { 'accountDetails.accidentOccured': true });
-      
+      console.log(`UPDATE FIRESTORE`, new Date().toLocaleString('en-US', { hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' }));
+
       if (bookingKey && city) { //booked rider
         const {username} = firestoreUserData.personalInformation;
 
@@ -164,6 +168,7 @@ export default function RiderHome() {
         console.log(`rider on queue`);
       }
       //updateDoc(doc(firestore, `${localData.userType}/${localData.uid}`), { 'accountDetails.accidentOccured': true });
+      console.log(`UPDATE REALTIME`,new Date().toLocaleString('en-US', { hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' }));
     } catch (e) { console.log(`error updating rider status: ${e}`); }
   };
 
