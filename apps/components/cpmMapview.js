@@ -30,6 +30,7 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
             const { routes } = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`)).json();
             if (!routes?.length) return;
             const routeCoordinates = routes[0].geometry.coordinates.map(([lon, lat]) => ({ latitude: lat, longitude: lon }));
+            //console.log(`Route coordinates: ${JSON.stringify(routeCoordinates)}`);
             setRoute(routeCoordinates);
 
             if(localData?.userType === 'riders') {
@@ -50,14 +51,14 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
                 return;
             }
             
-            if (localData?.userType === 'clients' && bookingStatus === 'inactive') {
+            if (localData?.userType === 'clients') {
                 const distance = parseFloat((routes[0].distance / 1000).toFixed(2));
                 const duration = parseFloat((routes[0].duration / 60).toFixed(2));
                 const price = distance <= 2 
                     ? firestoreTransactionFee.minimumDistance 
                     : Math.floor(((distance - 2) * firestoreTransactionFee.maximumDistance) + (firestoreTransactionFee.minimumDistance * 2));
     
-                setBookingDetails({ distance, price, duration });
+                setBookingDetails((prev) => ({ ...prev, distance, price, duration }));
             }
         }catch(e) { console.warn("Error fetching route:", e); }
     }
@@ -74,7 +75,6 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
             setBookingDetails((prev) => ({ ...prev, steps: {} }));
         }
 
-        
         if (!points[0].latitude || !points[0].longitude || !points[2].latitude || !points[2].longitude) {
             setRoute([]);
         }

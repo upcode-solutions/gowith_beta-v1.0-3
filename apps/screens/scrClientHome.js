@@ -50,7 +50,7 @@ export default function ClientHome() {
     const { username, contactNumber, weight, firstName, lastName } = firestoreUserData.personalInformation;
     const { price, distance, duration } = bookingDetails;
     const { city, bookingKey } = firestoreUserData.bookingDetails;
-    const { flag, accountStatus } = firestoreUserData.accountDetails; //accountDetails current flag
+    const { flags, accountStatus } = firestoreUserData.accountDetails; //accountDetails current flag
     
     try {
       if (bookingStatus === 'onQueue' || bookingStatus === 'active') {
@@ -60,7 +60,7 @@ export default function ClientHome() {
         await remove(ref(realtime, `bookings/${city}/${bookingKey}`));
 
         await updateDoc(doc(firestore, localData.userType, localData.uid), { 
-          accountDetails: { ...firestoreUserData.accountDetails, flags: riderDetails?.personalInformation ? flag + 1 : flag }, //accountDetails flag
+          accountDetails: { ...firestoreUserData.accountDetails, flags: riderDetails?.personalInformation ? flags + 1 : flags }, //accountDetails flag
           bookingDetails: {} //remove booking key from firestore
         });
 
