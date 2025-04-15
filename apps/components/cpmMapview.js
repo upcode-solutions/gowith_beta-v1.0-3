@@ -25,6 +25,7 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
     };
 
     const fetchRoute = async (from, to) => {
+        console.log('fetching route');
         try {
             const { routes } = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`)).json();
             if (!routes?.length) return;
@@ -63,17 +64,22 @@ export default function Mapview({ bookingStatus, points, mapRef, bookingDetails,
 
     //useEffects ================================================================
     useEffect(() => {
-        const { clientOnBoard } = bookingDetails.bookingDetails || {};
         
+        const { clientOnBoard } = bookingDetails.bookingDetails || {};
         const { userType } = localData;
         //console.log(`userType: ${userType}, clientOnBoard: ${clientOnBoard}`);
-
+        
         if(userType === 'riders' && bookingStatus === 'inactive' || bookingStatus === 'onQueue') { 
             setRoute([]); 
             setBookingDetails((prev) => ({ ...prev, steps: {} }));
         }
+
         
-        if (userType === 'clients' && bookingStatus !== 'active') { fetchRoute(points[0], points[1]); }
+        if (!points[0].latitude || !points[0].longitude || !points[2].latitude || !points[2].longitude) {
+            setRoute([]);
+        }
+        
+        if (userType === 'clients') { fetchRoute(points[0], points[1]); }
         else if (bookingStatus === 'active' && !clientOnBoard) { fetchRoute(points[2], points[0]); }
         else if (bookingStatus === 'active' && clientOnBoard) { fetchRoute(points[2], points[1]); }
         

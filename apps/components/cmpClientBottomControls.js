@@ -107,7 +107,6 @@ export default function ClientBottomControls({ bookingPoints, setBookingPoints, 
 
     const confirmationHandler = () => { 
         if (confirmationAction.action === 'transactionComplete') { transactionCompleteHandler() }
-  
         setConfirmationAction((prev) => ({ ...prev, isVisible: false }));
     }
 

@@ -95,8 +95,8 @@ export default function AccidentView() {
   
     const lastAccident = accidentHistory?.length ? accidentHistory[accidentHistory.length - 1] : null;
     const latestAccident = lastAccident ? await getDoc(doc(firestore, `accidents/${lastAccident}`)).then(res => res.exists() ? res.data() : {}) : {};
-  
-    if (lastAccident && Date.now() - (latestAccident?.accidentDetails?.accidentDateTime?.toMillis?.() || 0) < 10800000 || accidentStatus === 'pending') {
+    
+    if ( lastAccident && Date.now() - (latestAccident?.accidentDetails?.accidentDateTime?.toMillis?.() || 0) < 10800000 || accidentStatus === 'pending' ) {
       return console.log("Accident report blocked");
     }
   
@@ -170,8 +170,9 @@ export default function AccidentView() {
           if (lastAccident.length) {
             await updateDoc(doc(firestore, `accidents/${lastAccident}`), { 'accidentDetails.detectionStatus': false });
           }
-
-          const { clientOnBoard } = necessaryData.bookingDetails.bookingDetails || {};
+          
+          const { clientOnBoard } = necessaryData.bookingDetails && necessaryData.bookingDetails.bookingDetails || {};
+          console.log(clientOnBoard);
           
           await updateDoc(doc(firestore, `${necessaryData.userType}/${necessaryData.uid}`), { 
             'accountDetails.accidentOccured': false, 
